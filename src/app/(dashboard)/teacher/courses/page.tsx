@@ -45,7 +45,7 @@ export default function TeacherCoursesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("/api/v1/courses?limit=100")
+    fetch("/api/teacher/courses")
       .then((r) => r.json())
       .then((d) => {
         if (d.success) {
@@ -55,12 +55,12 @@ export default function TeacherCoursesPage() {
               title: c.title as string,
               slug: c.slug as string,
               description: c.description as string,
-              category: (c.category as { name: string } | null)?.name ?? null,
+              category: (c.category as string) || null,
               difficulty: (c.difficulty as string) || "beginner",
               duration: c.duration ? `${c.duration}h` : "Self-paced",
               isPublished: c.isPublished as boolean,
-              studentCount: (c._count as { enrollments: number })?.enrollments ?? 0,
-              moduleCount: (c._count as { modules: number })?.modules ?? 0,
+              studentCount: (c.studentCount as number) ?? 0,
+              moduleCount: (c.moduleCount as number) ?? 0,
             }))
           )
         }

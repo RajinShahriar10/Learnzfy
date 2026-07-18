@@ -28,9 +28,38 @@ export default function CreateCoursePage() {
   const [difficulty, setDifficulty] = useState<(typeof difficulties)[number]>("beginner")
   const [duration, setDuration] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    router.push("/teacher/courses")
+    if (submitting) return
+    setSubmitting(true)
+
+    try {
+      const res = await fetch("/api/teacher/courses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          shortDescription,
+          category,
+          difficulty,
+          duration,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success && data.data?.id) {
+        router.push(`/teacher/courses/${data.data.id}`)
+      } else {
+        alert(data.error || "Failed to create course")
+      }
+    } catch {
+      alert("Failed to create course. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -185,9 +214,9 @@ export default function CreateCoursePage() {
             </Card>
 
             <div className="flex gap-3">
-              <Button type="submit" className="flex-1">
+              <Button type="submit" className="flex-1" disabled={submitting}>
                 <Save className="mr-2 h-4 w-4" />
-                Save Draft
+                {submitting ? "Saving..." : "Save Draft"}
               </Button>
               <Button type="button" variant="outline" asChild>
                 <Link href="/teacher/courses">Cancel</Link>
