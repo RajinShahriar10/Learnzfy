@@ -32,7 +32,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.828 0.189 84.429);
+  --primary: hwb(192.93deg 0% 0%);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -44,7 +44,7 @@
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --ring: hwb(192.93deg 0% 0%);
 }
 
 @theme inline {
@@ -138,5 +138,5 @@ html.disable-transitions *::after {
 }
 
 html.dark ::selection {
-  background: oklch(0.828 0.189 84.429 / 0.2);
+  background: hwb(192.93deg 0% 0% / 0.2);
 }
