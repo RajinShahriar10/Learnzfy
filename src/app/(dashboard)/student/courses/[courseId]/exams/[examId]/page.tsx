@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { getExamById, getExamAttempts } from "@/lib/exam-data"
 import { ExamTaking } from "@/components/exam/exam-taking"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -24,13 +23,42 @@ import {
   Award,
 } from "lucide-react"
 
+interface ExamAttemptData {
+  score: number
+  totalMarks: number
+  percentage: number
+  correctAnswers: number
+  totalQuestions: number
+  timeTaken: number
+  completedAt: string | null
+  passed: boolean
+  rank: number
+  totalParticipants: number
+}
+
+interface ExamData {
+  id: string
+  courseId: string
+  title: string
+  description: string
+  timeLimit: number
+  passingScore: number
+  attemptsAllowed: number
+  totalMarks: number
+  totalQuestions: number
+  questionPools: unknown[]
+  placementTitle: string | null
+  attempts: ExamAttemptData[]
+}
+
 export default function StudentExamPage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.courseId as string
   const examId = params.examId as string
 
-  const exam = getExamById(examId)
+  const [exam, setExam] = useState<ExamData | null>(null)
+  const [loading, setLoading] = useState(true)
   const [started, setStarted] = useState(false)
   const [completedAttempt, setCompletedAttempt] = useState<{
     score: number
@@ -44,10 +72,30 @@ export default function StudentExamPage() {
     totalParticipants: number
   } | null>(null)
 
-  const attempts = getExamAttempts(examId)
+  useEffect(() => {
+    fetch(`/api/public/exams/${examId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("not found")
+        return r.json()
+      })
+      .then((json) => setExam(json.data))
+      .catch(() => setExam(null))
+      .finally(() => setLoading(false))
+  }, [examId])
+
+  const attempts = exam?.attempts || []
   const bestAttempt = attempts.length > 0
     ? attempts.reduce((b, a) => (a.percentage > b.percentage ? a : b))
     : null
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <FileCheck className="h-16 w-16 text-muted-foreground/30 animate-pulse" />
+        <p className="mt-4 text-muted-foreground">Loading exam...</p>
+      </div>
+    )
+  }
 
   if (!exam) {
     return (
@@ -67,7 +115,7 @@ export default function StudentExamPage() {
   if (started) {
     return (
       <ExamTaking
-        exam={exam}
+        exam={exam as never}
         onComplete={(result) => {
           setCompletedAttempt(result)
           setStarted(false)
@@ -145,7 +193,7 @@ export default function StudentExamPage() {
         <Card>
           <CardContent className="p-4 text-center">
             <FileCheck className="h-5 w-5 mx-auto mb-2 text-primary" />
-            <p className="text-lg font-bold">{exam.totalQuestions}</p>
+            <p className="text-lg font-bold">{exam.totalQuestions || "N/A"}</p>
             <p className="text-xs text-muted-foreground">Questions</p>
           </CardContent>
         </Card>
@@ -200,23 +248,27 @@ export default function StudentExamPage() {
         </CardContent>
       </Card>
 
-      {exam.questionPools.map((pool, i) => (
-        <Card key={pool.id} className="mb-4">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm">{pool.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {pool.questionsToSelect} of {pool.questions.length} questions &middot; {pool.questions.reduce((s, q) => s + q.marks, 0)} marks available
-                </p>
-              </div>
-              <Badge variant="outline" className="shrink-0">
-                Select {pool.questionsToSelect}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      {(exam.questionPools as unknown[]).length > 0 && (
+        <div>
+          {(exam.questionPools as Array<{ id: string; title: string; questionsToSelect: number; questions: unknown[] }>).map((pool) => (
+            <Card key={pool.id} className="mb-4">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-sm">{pool.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {pool.questionsToSelect} of {pool.questions.length} questions
+                    </p>
+                  </div>
+                  <Badge variant="outline" className="shrink-0">
+                    Select {pool.questionsToSelect}
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       {bestAttempt && (
         <Card className="mb-8 border-emerald-200">
@@ -269,5 +321,3 @@ export default function StudentExamPage() {
     </div>
   )
 }
-
-

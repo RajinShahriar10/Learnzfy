@@ -2,8 +2,22 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { BookOpen, Star, Users, Zap } from "lucide-react"
-import type { MockCourse } from "@/lib/mock-data"
+import { BookOpen, Star, Users } from "lucide-react"
+
+export interface CourseData {
+  id: string
+  title: string
+  slug: string
+  description: string
+  thumbnailUrl?: string | null
+  difficulty: string
+  duration?: number | null
+  teacher: { id: string; name: string | null; image?: string | null }
+  category?: { id: string; name: string; slug: string } | null
+  studentCount: number
+  avgRating: number
+  [key: string]: unknown
+}
 
 const difficultyVariant = {
   beginner: "beginner" as const,
@@ -11,11 +25,13 @@ const difficultyVariant = {
   advanced: "advanced" as const,
 }
 
-export function CourseCard({ course }: { course: MockCourse }) {
-  const initials = course.teacher.name
+export function CourseCard({ course }: { course: CourseData }) {
+  const teacherName = course.teacher.name || "Unknown"
+  const initials = teacherName
     .split(" ")
     .map((n) => n[0])
     .join("")
+    .slice(0, 2)
 
   return (
     <Link href={`/courses/${course.slug}`}>
@@ -25,10 +41,12 @@ export function CourseCard({ course }: { course: MockCourse }) {
         </div>
         <CardContent className="p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Badge variant={difficultyVariant[course.difficulty]}>
+            <Badge variant={difficultyVariant[course.difficulty as keyof typeof difficultyVariant] || "beginner"}>
               {course.difficulty}
             </Badge>
-            <Badge variant="secondary">{course.category}</Badge>
+            {course.category && (
+              <Badge variant="secondary">{course.category.name}</Badge>
+            )}
           </div>
           <h3 className="font-semibold text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {course.title}
@@ -41,7 +59,7 @@ export function CourseCard({ course }: { course: MockCourse }) {
               <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
             </Avatar>
             <span className="text-sm text-muted-foreground">
-              {course.teacher.name}
+              {teacherName}
             </span>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -51,16 +69,14 @@ export function CourseCard({ course }: { course: MockCourse }) {
             </span>
             <span className="flex items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-              {course.rating}
-            </span>
-            <span className="flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5 text-orange-400" />
-              {course.xpReward} XP
+              {course.avgRating || "N/A"}
             </span>
           </div>
         </CardContent>
         <CardFooter className="px-5 pb-4 pt-0">
-          <div className="text-xs text-muted-foreground">{course.duration}</div>
+          <div className="text-xs text-muted-foreground">
+            {course.duration ? `${course.duration} hours` : "Self-paced"}
+          </div>
         </CardFooter>
       </Card>
     </Link>

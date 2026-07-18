@@ -1,12 +1,9 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { getLessonContent, getLessonProgress, type LessonNote } from "@/lib/lesson-data"
-import { getCourseById } from "@/lib/mock-data"
-import { teacherCourses } from "@/lib/teacher-data"
-import { getQuizByLessonId } from "@/lib/quiz-data"
+import type { LessonNote } from "@/lib/lesson-data"
 import { QuizTaking } from "@/components/quiz/quiz-taking"
 import { VideoPlayer } from "@/components/lesson/video-player"
 import { ResourcesPanel } from "@/components/lesson/resources-panel"
@@ -45,27 +42,73 @@ const contentTypeLabels: Record<string, string> = {
   code: "Code Exercise",
 }
 
+interface LessonData {
+  id: string
+  title: string
+  description: string | null
+  contentType: string
+  duration: string | null
+  isFree: boolean
+  order: number
+  videoUrl: string | null
+  content: string | null
+}
+
+interface LessonModule {
+  id: string
+  title: string
+  order: number
+  lessons: { id: string; title: string; order: number; isFree?: boolean; contentType?: string }[]
+}
+
+interface QuizData {
+  id: string
+  title: string
+  description: string | null
+  timeLimit: number | null
+  passingScore: number
+  questions: unknown[]
+}
+
+interface ApiData {
+  lesson: LessonData
+  course: { id: string; title: string }
+  modules: LessonModule[]
+  quiz: QuizData | null
+}
+
 export default function LessonViewerPage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.courseId as string
   const lessonId = params.lessonId as string
 
-  const course = getCourseById(courseId)
-  const teacherCourse = teacherCourses.find((tc) => tc.title === course?.title)
-  const lesson = getLessonContent(lessonId)
-  const quiz = getQuizByLessonId(lessonId)
-  const [progress, setProgress] = useState(() => getLessonProgress(lessonId))
-  const [notes, setNotes] = useState<LessonNote[]>(progress.notes || [])
+  const [data, setData] = useState<ApiData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch(`/api/public/lessons/${lessonId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("not found")
+        return r.json()
+      })
+      .then((json) => setData(json.data))
+      .catch(() => setData(null))
+      .finally(() => setLoading(false))
+  }, [lessonId])
+
+  const [progress, setProgress] = useState({ completed: false, watchProgress: 0, completedAt: null as string | null })
+  const [notes, setNotes] = useState<LessonNote[]>([])
   const [activeTab, setActiveTab] = useState("resources")
-  const [watchProgress, setWatchProgress] = useState(progress.watchProgress || 0)
+  const [watchProgress, setWatchProgress] = useState(0)
   const [quizStarted, setQuizStarted] = useState(false)
   const [quizCompleted, setQuizCompleted] = useState(false)
 
   const allLessons = useMemo(() => {
-    if (!teacherCourse) return []
-    return teacherCourse.modules.flatMap((m) => m.lessons)
-  }, [teacherCourse])
+    if (!data) return []
+    return data.modules.flatMap((m) => m.lessons)
+  }, [data])
 
   const currentIndex = allLessons.findIndex((l) => l.id === lessonId)
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null
@@ -107,11 +150,23 @@ export default function LessonViewerPage() {
     }))
   }
 
+  const lesson = data?.lesson
+  const quiz = data?.quiz
+
   if (quiz && (quizStarted || quizCompleted)) {
-    return <QuizTaking quiz={quiz} onComplete={handleQuizComplete} />
+    return <QuizTaking quiz={quiz as never} onComplete={handleQuizComplete} />
   }
 
-  if (!course || !lesson) {
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <BookOpen className="h-16 w-16 text-muted-foreground/30 animate-pulse" />
+        <p className="mt-4 text-muted-foreground">Loading lesson...</p>
+      </div>
+    )
+  }
+
+  if (!lesson) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-center">
         <BookOpen className="h-16 w-16 text-muted-foreground/30" />
@@ -129,15 +184,15 @@ export default function LessonViewerPage() {
     )
   }
 
-  const Icon = contentTypeIcons[lesson.contentType]
+  const Icon = contentTypeIcons[lesson.contentType] || BookOpen
 
   return (
     <div className="flex gap-0 -mx-4 sm:-mx-6 lg:-mx-8">
       <CourseContentSidebar
         courseId={courseId}
-        modules={teacherCourse?.modules || []}
+        modules={data?.modules || []}
         progress={Object.fromEntries(
-          allLessons.map((l) => [l.id, getLessonProgress(l.id)])
+          allLessons.map((l) => [l.id, { completed: false }])
         )}
       />
 
@@ -154,7 +209,7 @@ export default function LessonViewerPage() {
                 <div className="flex items-center gap-2 text-sm">
                   <Icon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
-                    {contentTypeLabels[lesson.contentType]}
+                    {contentTypeLabels[lesson.contentType] || lesson.contentType}
                   </span>
                   {lesson.isFree && (
                     <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
@@ -197,7 +252,7 @@ export default function LessonViewerPage() {
 
           <div className="px-4 sm:px-6 pb-3">
             <div className="flex items-center gap-3 text-xs text-muted-foreground mb-2">
-              <span>{lesson.duration}</span>
+              <span>{lesson.duration || "N/A"}</span>
               <span>&middot;</span>
               <span>
                 Lesson {currentIndex + 1} of {allLessons.length}
@@ -210,26 +265,25 @@ export default function LessonViewerPage() {
         <div className="px-4 sm:px-6 py-6">
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
-              {lesson.contentType === "video" && lesson.youtubeUrl && (
+              {lesson.contentType === "video" && lesson.videoUrl && (
                 <VideoPlayer
-                  youtubeUrl={lesson.youtubeUrl}
+                  youtubeUrl={lesson.videoUrl}
                   onProgress={handleProgress}
                   initialProgress={watchProgress}
                 />
               )}
 
-              {lesson.contentType === "article" && lesson.articleContent && (
-                <CardMarkdown content={lesson.articleContent} />
+              {lesson.contentType === "article" && lesson.content && (
+                <CardMarkdown content={lesson.content} />
               )}
 
-              {lesson.contentType === "code" && lesson.codeExamples && (
+              {lesson.contentType === "code" && (
                 <div className="space-y-4">
                   <div className="rounded-lg border bg-card p-6">
                     <h2 className="font-semibold mb-2">Code Exercise</h2>
                     <p className="text-sm text-muted-foreground mb-4">
-                      {lesson.description}
+                      {lesson.description || "Complete the code exercise below."}
                     </p>
-                    <ResourcesPanel codeExamples={lesson.codeExamples} />
                   </div>
                 </div>
               )}
@@ -239,13 +293,12 @@ export default function LessonViewerPage() {
                   <HelpCircle className="mx-auto h-12 w-12 text-muted-foreground/40" />
                   <h2 className="mt-4 text-lg font-semibold">{quiz.title}</h2>
                   <p className="mt-1 text-sm text-muted-foreground max-w-lg mx-auto">
-                    {quiz.description}
+                    {quiz.description || "Test your knowledge with this quiz."}
                   </p>
                   <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
                     <span>{quiz.questions.length} questions</span>
-                    <span>{quiz.timeLimit} min time limit</span>
+                    {quiz.timeLimit && <span>{quiz.timeLimit} min time limit</span>}
                     <span>{quiz.passingScore}% to pass</span>
-                    <span>{quiz.attemptsAllowed} attempts</span>
                   </div>
                   <Button className="mt-6" size="lg" onClick={() => setQuizStarted(true)}>
                     <HelpCircle className="mr-2 h-5 w-5" />
@@ -257,7 +310,7 @@ export default function LessonViewerPage() {
               <div className="rounded-lg border bg-card p-6">
                 <h2 className="font-semibold mb-2">About this lesson</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  {lesson.description}
+                  {lesson.description || "No description available."}
                 </p>
               </div>
 
@@ -352,10 +405,7 @@ export default function LessonViewerPage() {
                   </TabsList>
                   <TabsContent value="resources" className="mt-4">
                     <ResourcesPanel
-                      attachments={lesson.attachments}
-                      resources={lesson.resources}
-                      codeExamples={lesson.codeExamples}
-                      articleContent={lesson.articleContent}
+                      articleContent={lesson.content || undefined}
                     />
                   </TabsContent>
                   <TabsContent value="notes" className="mt-4">

@@ -1,10 +1,62 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { TeacherCard } from "@/components/shared/teacher-card"
-import { teachers } from "@/lib/mock-data"
+import { prisma } from "@/lib/prisma"
 import { ArrowRight } from "lucide-react"
 
-export function TopTeachers() {
+export async function TopTeachers() {
+  const rawTeachers = await prisma.user.findMany({
+    where: {
+      role: "TEACHER",
+      isActive: true,
+      teacherApplication: { status: "APPROVED" },
+    },
+    take: 5,
+    include: {
+      profile: { select: { bio: true } },
+      teacherApplication: { select: { expertiseArea: true } },
+      _count: { select: { createdCourses: true, enrollments: true } },
+      createdCourses: {
+        where: { isPublished: true },
+        select: { category: { select: { name: true } } },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  })
+
+  const teacherIds = rawTeachers.map((t) => t.id)
+  const teacherReviews = await prisma.teacherReview.groupBy({
+    by: ["teacherId"],
+    where: { teacherId: { in: teacherIds }, isHidden: false },
+    _avg: { rating: true },
+  })
+  const ratingMap = new Map(
+    teacherReviews.map((r) => [r.teacherId, Math.round((r._avg.rating || 0) * 10) / 10])
+  )
+
+  const teachers = rawTeachers.map((t) => {
+    const specialties: string[] = [
+      ...new Set(t.createdCourses.map((c) => c.category?.name).filter(Boolean) as string[]),
+    ]
+    if (t.teacherApplication?.expertiseArea) {
+      for (const e of t.teacherApplication.expertiseArea.split(",").map((s) => s.trim()).filter(Boolean)) {
+        if (!specialties.includes(e)) specialties.push(e)
+      }
+    }
+    return {
+      id: t.id,
+      name: t.name,
+      image: t.image,
+      bio: t.profile?.bio ?? null,
+      specialties,
+      courseCount: t._count.createdCourses,
+      studentCount: t._count.enrollments,
+      rating: ratingMap.get(t.id) || 0,
+    }
+  })
+
+  if (teachers.length === 0) return null
+
   return (
     <section className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">

@@ -1,13 +1,28 @@
+import { prisma } from "@/lib/prisma"
 import { BookOpen, GraduationCap, Trophy, Users } from "lucide-react"
 
-const stats = [
-  { icon: GraduationCap, value: "10,000+", label: "Active Students" },
-  { icon: BookOpen, value: "500+", label: "Free Courses" },
-  { icon: Users, value: "50+", label: "Expert Teachers" },
-  { icon: Trophy, value: "95%", label: "Satisfaction Rate" },
-]
+export async function StatisticsSection() {
+  const [studentCount, courseCount, teacherCount, enrollmentCount, completedCount] =
+    await Promise.all([
+      prisma.user.count({ where: { role: "STUDENT", isActive: true } }),
+      prisma.course.count({ where: { isPublished: true } }),
+      prisma.user.count({ where: { role: "TEACHER", isActive: true } }),
+      prisma.enrollment.count(),
+      prisma.enrollment.count({ where: { status: "COMPLETED" } }),
+    ])
 
-export function StatisticsSection() {
+  const satisfactionRate =
+    enrollmentCount > 0
+      ? Math.round((completedCount / enrollmentCount) * 100)
+      : 0
+
+  const stats = [
+    { icon: GraduationCap, value: studentCount.toLocaleString() + "+", label: "Active Students" },
+    { icon: BookOpen, value: courseCount.toLocaleString() + "+", label: "Free Courses" },
+    { icon: Users, value: teacherCount.toLocaleString() + "+", label: "Expert Teachers" },
+    { icon: Trophy, value: satisfactionRate + "%", label: "Satisfaction Rate" },
+  ]
+
   return (
     <section className="py-20">
       <div className="container mx-auto px-4">

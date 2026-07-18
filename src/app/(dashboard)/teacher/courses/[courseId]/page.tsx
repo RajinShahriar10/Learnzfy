@@ -1,11 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { getTeacherCourseById, type TeacherModule, type TeacherLesson } from "@/lib/teacher-data"
-import { getCourseQuizzes, type TeacherQuiz, type QuizQuestion, type QuestionType } from "@/lib/quiz-data"
-import { getCourseExams, type TeacherExam, type ExamQuestion as ExamQuestionType, type ExamQuestionType as ExamQuestionTypeVariant, type QuestionPool } from "@/lib/exam-data"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -28,6 +25,103 @@ import {
   FileCheck,
   Layers,
 } from "lucide-react"
+
+type QuestionType = "mcq" | "true-false" | "multiple-select"
+
+interface QuizQuestion {
+  id: string
+  type: QuestionType
+  question: string
+  options: string[]
+  correctAnswer: string | string[]
+  explanation?: string
+}
+
+interface TeacherQuiz {
+  id: string
+  courseId: string
+  moduleId: string
+  lessonId: string
+  title: string
+  description: string
+  timeLimit: number
+  passingScore: number
+  attemptsAllowed: number
+  randomQuestions: boolean
+  questions: QuizQuestion[]
+}
+
+interface TeacherModule {
+  id: string
+  title: string
+  description: string
+  order: number
+  lessons: TeacherLesson[]
+}
+
+interface TeacherLesson {
+  id: string
+  title: string
+  description: string
+  contentType: "video" | "article" | "quiz" | "code"
+  duration: string
+  isFree: boolean
+  order: number
+}
+
+interface ExamQuestionType {
+  id: string
+  type: QuestionType
+  question: string
+  options: string[]
+  correctAnswer: string | string[]
+  marks: number
+}
+
+interface QuestionPool {
+  id: string
+  title: string
+  questionsToSelect: number
+  questions: ExamQuestionType[]
+}
+
+interface TeacherExam {
+  id: string
+  title: string
+  description: string
+  courseId: string
+  timeLimit: number
+  passingScore: number
+  maxAttempts: number
+  isPublished: boolean
+  questions: ExamQuestionType[]
+  questionPools: QuestionPool[]
+  placementModuleId?: string
+  randomizeQuestions?: boolean
+  attemptsAllowed?: number
+}
+
+interface CourseData {
+  id: string
+  title: string
+  slug: string
+  description: string
+  shortDescription: string
+  thumbnail: string
+  category: string
+  difficulty: "beginner" | "intermediate" | "advanced"
+  duration: string
+  isPublished: boolean
+  studentCount: number
+  completionRate?: number
+  averageScore?: number
+  rating?: number
+  createdAt: string
+  updatedAt: string
+  modules: TeacherModule[]
+  quizzes: TeacherQuiz[]
+  exams: (TeacherExam & { questionPools: QuestionPool[] })[]
+}
 
 const difficultyColors: Record<string, string> = {
   beginner: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
@@ -53,14 +147,45 @@ export default function EditCoursePage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.courseId as string
-  const course = getTeacherCourseById(courseId)
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set(course?.modules.map((m) => m.id) || []))
+  const [course, setCourse] = useState<CourseData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
   const [editingQuiz, setEditingQuiz] = useState<TeacherQuiz | null>(null)
   const [showNewQuiz, setShowNewQuiz] = useState(false)
   const [editingExam, setEditingExam] = useState<TeacherExam | null>(null)
   const [showNewExam, setShowNewExam] = useState(false)
-  const courseQuizzes = getCourseQuizzes(course?.id || "")
-  const courseExams = getCourseExams(course?.id || "")
+
+  useEffect(() => {
+    fetch(`/api/teacher/courses/${courseId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error("not found")
+        return r.json()
+      })
+      .then((json) => {
+        const data = json.data as CourseData
+        data.exams = data.exams.map((e) => ({
+          ...e,
+          questionPools: e.questionPools || [],
+          attemptsAllowed: e.attemptsAllowed || e.maxAttempts,
+          randomizeQuestions: e.randomizeQuestions ?? true,
+        }))
+        setCourse(data)
+        setExpandedModules(new Set(data.modules.map((m) => m.id)))
+      })
+      .catch(() => setCourse(null))
+      .finally(() => setLoading(false))
+  }, [courseId])
+
+  const courseQuizzes = course?.quizzes || []
+  const courseExams = course?.exams || []
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <h2 className="text-2xl font-bold">Loading course...</h2>
+      </div>
+    )
+  }
 
   if (!course) {
     return (
@@ -910,7 +1035,7 @@ function ExamEditorPanel({
     setEditingPool(null)
   }
 
-  const addPoolQuestion = (poolIndex: number, type: ExamQuestionTypeVariant) => {
+  const addPoolQuestion = (poolIndex: number, type: QuestionType) => {
     const newQ: ExamQuestionType = {
       id: `exq-${Date.now()}`,
       type,

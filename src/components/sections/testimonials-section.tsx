@@ -1,19 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
-import { testimonials } from "@/lib/mock-data"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 
-export function TestimonialsSection() {
-  const [current, setCurrent] = useState(0)
-  const t = testimonials[current]
+interface Testimonial {
+  id: string
+  name: string
+  role: string
+  content: string | null
+  rating: number
+}
 
+export function TestimonialsSection() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [current, setCurrent] = useState(0)
+
+  useEffect(() => {
+    fetch("/api/public/reviews?limit=10")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data?.length > 0) {
+          setTestimonials(d.data)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  if (testimonials.length === 0) return null
+
+  const t = testimonials[current]
   const prev = () => setCurrent((c) => (c === 0 ? testimonials.length - 1 : c - 1))
   const next = () => setCurrent((c) => (c === testimonials.length - 1 ? 0 : c + 1))
 
-  const initials = t.name
+  const initials = (t.name || "A")
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -51,36 +72,42 @@ export function TestimonialsSection() {
                 <div className="text-sm text-muted-foreground">{t.role}</div>
               </div>
             </div>
-            <div className="absolute top-1/2 -translate-y-1/2 left-2 md:left-4">
-              <button
-                onClick={prev}
-                className="flex h-10 w-10 items-center justify-center rounded-full border bg-background hover:bg-muted transition-colors"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="absolute top-1/2 -translate-y-1/2 right-2 md:right-4">
-              <button
-                onClick={next}
-                className="flex h-10 w-10 items-center justify-center rounded-full border bg-background hover:bg-muted transition-colors"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
+            {testimonials.length > 1 && (
+              <>
+                <div className="absolute top-1/2 -translate-y-1/2 left-2 md:left-4">
+                  <button
+                    onClick={prev}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border bg-background hover:bg-muted transition-colors"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </button>
+                </div>
+                <div className="absolute top-1/2 -translate-y-1/2 right-2 md:right-4">
+                  <button
+                    onClick={next}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border bg-background hover:bg-muted transition-colors"
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </>
+            )}
           </Card>
-          <div className="flex justify-center gap-2 mt-6">
-            {testimonials.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrent(i)}
-                className={`h-2 w-2 rounded-full transition-all ${
-                  i === current
-                    ? "bg-primary w-6"
-                    : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
-                }`}
-              />
-            ))}
-          </div>
+          {testimonials.length > 1 && (
+            <div className="flex justify-center gap-2 mt-6">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrent(i)}
+                  className={`h-2 w-2 rounded-full transition-all ${
+                    i === current
+                      ? "bg-primary w-6"
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>

@@ -1,114 +1,58 @@
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { achievements } from "@/lib/student-data"
 import { Card, CardContent } from "@/components/ui/card"
-import { CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 import {
-  Rocket,
-  Book,
   Trophy,
-  Flame,
-  Brain,
-  Award,
-  Zap,
-  MessageSquare,
   Lock,
   CheckCircle2,
   Share2,
   Globe,
-  User,
+  Award,
 } from "lucide-react"
-
-const iconMap: Record<string, any> = {
-  rocket: Rocket,
-  book: Book,
-  trophy: Trophy,
-  flame: Flame,
-  brain: Brain,
-  award: Award,
-  zap: Zap,
-  message: MessageSquare,
-}
-
-function AchievementCard({
-  achievement,
-}: {
-  achievement: (typeof achievements)[number]
-}) {
-  const Icon = iconMap[achievement.icon] || Trophy
-  const isUnlocked = !!achievement.unlockedAt
-  const progressPct = Math.min(
-    (achievement.progress / achievement.total) * 100,
-    100
-  )
-
-  return (
-    <Card
-      className={cn(
-        "transition-all hover:shadow-md",
-        !isUnlocked && "opacity-70"
-      )}
-    >
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          <div
-            className={cn(
-              "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-              isUnlocked ? "bg-primary/10" : "bg-muted"
-            )}
-          >
-            {isUnlocked ? (
-              <Icon className="h-6 w-6 text-primary" />
-            ) : (
-              <Lock className="h-5 w-5 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold">{achievement.name}</h3>
-              {isUnlocked && (
-                <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              {achievement.description}
-            </p>
-            {isUnlocked ? (
-              <p className="text-xs text-green-600 mt-2">
-                Unlocked{" "}
-                {new Date(achievement.unlockedAt!).toLocaleDateString()}
-              </p>
-            ) : (
-              <div className="mt-3 space-y-1">
-                <Progress value={progressPct} className="h-2" />
-                <p className="text-xs text-muted-foreground">
-                  {achievement.progress}/{achievement.total}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
 
 export default async function AchievementsPage() {
   const session = await auth()
-  const profile = session?.user?.id
-    ? await prisma.profile.findUnique({ where: { userId: session.user.id } })
-    : null
+  const userId = session?.user?.id
+
+  if (!userId) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-muted-foreground">Please sign in to view achievements.</p>
+      </div>
+    )
+  }
+
+  const profile = await prisma.profile.findUnique({
+    where: { userId },
+  })
+
+  const allBadges = await prisma.badge.findMany({
+    orderBy: { name: "asc" },
+  })
+
+  const userBadges = await prisma.userBadge.findMany({
+    where: { userId },
+    include: { badge: true },
+  })
+
+  const earnedBadgeIds = new Set(userBadges.map((ub) => ub.badgeId))
+  const earnedBadges = userBadges.map((ub) => ({
+    ...ub.badge,
+    unlockedAt: ub.earnedAt,
+  }))
+
+  const lockedBadges = allBadges
+    .filter((b) => !earnedBadgeIds.has(b.id))
+    .map((b) => ({
+      ...b,
+      unlockedAt: null as Date | null,
+    }))
 
   const profileVisibility = profile?.profileVisibility ?? "public"
-  const profileUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/profile/${session?.user?.id ?? ""}`
-
-  const unlocked = achievements.filter((a) => a.unlockedAt)
-  const locked = achievements.filter((a) => !a.unlockedAt)
+  const profileUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/profile/${userId}`
 
   return (
     <div className="space-y-8">
@@ -116,7 +60,7 @@ export default async function AchievementsPage() {
         <div>
           <h1 className="text-2xl font-bold">Achievements</h1>
           <p className="text-sm text-muted-foreground">
-            {unlocked.length} of {achievements.length} unlocked
+            {earnedBadges.length} of {allBadges.length} unlocked
           </p>
         </div>
         {profileVisibility !== "private" && (
@@ -134,31 +78,80 @@ export default async function AchievementsPage() {
         )}
       </div>
 
-      {unlocked.length > 0 && (
+      {earnedBadges.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
             Unlocked
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {unlocked.map((achievement) => (
-              <AchievementCard key={achievement.id} achievement={achievement} />
+            {earnedBadges.map((badge) => (
+              <Card key={badge.id} className="transition-all hover:shadow-md">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <Award className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{badge.name}</h3>
+                        <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {badge.description || "Badge earned"}
+                      </p>
+                      <p className="text-xs text-green-600 mt-2">
+                        Unlocked {new Date(badge.unlockedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       )}
 
-      {locked.length > 0 && (
+      {lockedBadges.length > 0 && (
         <div>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <Lock className="h-5 w-5 text-muted-foreground" />
             Locked
           </h2>
           <div className="grid gap-4 sm:grid-cols-2">
-            {locked.map((achievement) => (
-              <AchievementCard key={achievement.id} achievement={achievement} />
+            {lockedBadges.map((badge) => (
+              <Card key={badge.id} className="transition-all hover:shadow-md opacity-70">
+                <CardContent className="p-5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
+                      <Lock className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold">{badge.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {badge.description || "Complete challenges to unlock"}
+                      </p>
+                      {badge.criteria && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {badge.criteria}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
+        </div>
+      )}
+
+      {allBadges.length === 0 && (
+        <div className="text-center py-20">
+          <Trophy className="mx-auto h-12 w-12 text-muted-foreground/40" />
+          <h3 className="mt-4 text-lg font-semibold">No achievements yet</h3>
+          <p className="text-sm text-muted-foreground">
+            Complete courses and activities to earn badges
+          </p>
         </div>
       )}
     </div>

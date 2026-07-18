@@ -1,11 +1,33 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CourseCard } from "@/components/shared/course-card"
-import { courses } from "@/lib/mock-data"
+import { prisma } from "@/lib/prisma"
 import { ArrowRight } from "lucide-react"
 
-export function FeaturedCourses() {
-  const featured = courses.slice(0, 6)
+export async function FeaturedCourses() {
+  const rawCourses = await prisma.course.findMany({
+    where: { isPublished: true },
+    take: 6,
+    orderBy: { createdAt: "desc" },
+    include: {
+      teacher: { select: { id: true, name: true, image: true } },
+      category: { select: { id: true, name: true, slug: true } },
+      _count: { select: { enrollments: true } },
+      reviews: { select: { rating: true } },
+    },
+  })
+
+  const courses = rawCourses.map((c) => {
+    const totalRatings = c.reviews.length
+    const avgRating =
+      totalRatings > 0
+        ? Math.round((c.reviews.reduce((s, r) => s + r.rating, 0) / totalRatings) * 10) / 10
+        : 0
+    const { reviews, ...rest } = c
+    return { ...rest, avgRating, studentCount: rest._count.enrollments }
+  })
+
+  if (courses.length === 0) return null
 
   return (
     <section className="py-20">
@@ -24,7 +46,7 @@ export function FeaturedCourses() {
           </Link>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((course) => (
+          {courses.map((course) => (
             <CourseCard key={course.id} course={course} />
           ))}
         </div>

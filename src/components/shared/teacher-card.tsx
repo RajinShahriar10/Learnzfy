@@ -3,13 +3,25 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Star, Users, BookOpen } from "lucide-react"
-import type { MockTeacher } from "@/lib/mock-data"
 
-export function TeacherCard({ teacher }: { teacher: MockTeacher }) {
-  const initials = teacher.name
+export interface TeacherData {
+  id: string
+  name: string | null
+  image?: string | null
+  bio?: string | null
+  specialties: string[]
+  courseCount: number
+  studentCount: number
+  rating: number
+}
+
+export function TeacherCard({ teacher }: { teacher: TeacherData }) {
+  const name = teacher.name || "Unknown"
+  const initials = name
     .split(" ")
     .map((n) => n[0])
     .join("")
+    .slice(0, 2)
 
   return (
     <Link href={`/teachers/${teacher.id}`}>
@@ -21,11 +33,10 @@ export function TeacherCard({ teacher }: { teacher: MockTeacher }) {
             </AvatarFallback>
           </Avatar>
           <h3 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
-            {teacher.name}
+            {name}
           </h3>
-          <p className="text-sm text-muted-foreground mb-3">{teacher.role}</p>
           <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-            {teacher.bio}
+            {teacher.bio || "Educator on Learnzfy"}
           </p>
           <div className="flex flex-wrap justify-center gap-2 mb-4">
             {teacher.specialties.map((s) => (
@@ -45,7 +56,7 @@ export function TeacherCard({ teacher }: { teacher: MockTeacher }) {
             </span>
             <span className="flex items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-              {teacher.rating}
+              {teacher.rating || "N/A"}
             </span>
           </div>
         </CardContent>

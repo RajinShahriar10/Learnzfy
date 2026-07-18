@@ -1,32 +1,62 @@
 "use client"
 
-import { useState } from "react"
-import { teacherStudents } from "@/lib/teacher-data"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Search,
-  Mail,
   Calendar,
   ChevronDown,
   ChevronUp,
 } from "lucide-react"
 
+interface Student {
+  id: string
+  name: string | null
+  email: string
+  enrolledAt: string
+  progress: number
+  courseName: string
+}
+
 export default function TeacherStudentsPage() {
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState<"name" | "progress" | "enrolledAt">("enrolledAt")
   const [sortAsc, setSortAsc] = useState(false)
+  const [students, setStudents] = useState<Student[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const filtered = teacherStudents
+  useEffect(() => {
+    fetch("/api/analytics/teacher")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data?.enrollments) {
+          setStudents(
+            d.data.enrollments.map((e: Record<string, unknown>) => ({
+              id: e.id as string,
+              name: (e.user as { name: string | null })?.name || "Unknown",
+              email: (e.user as { email: string })?.email || "",
+              enrolledAt: e.enrolledAt as string,
+              progress: (e.progress as number) || 0,
+              courseName: (e.course as { title: string })?.title || "",
+            }))
+          )
+        }
+      })
+      .catch(() => setStudents([]))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const filtered = students
     .filter(
       (s) =>
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        s.name?.toLowerCase().includes(search.toLowerCase()) ||
         s.email.toLowerCase().includes(search.toLowerCase())
     )
     .sort((a, b) => {
       let cmp = 0
-      if (sortBy === "name") cmp = a.name.localeCompare(b.name)
+      if (sortBy === "name") cmp = (a.name || "").localeCompare(b.name || "")
       else if (sortBy === "progress") cmp = a.progress - b.progress
       else cmp = new Date(a.enrolledAt).getTime() - new Date(b.enrolledAt).getTime()
       return sortAsc ? cmp : -cmp
@@ -90,61 +120,67 @@ export default function TeacherStudentsPage() {
               Progress
               <SortIcon className="h-3.5 w-3.5" />
             </button>
-            <span className="text-left">Last Active</span>
+            <span className="text-left">Course</span>
           </div>
 
-          {filtered.map((student) => (
-            <div
-              key={student.id}
-              className="grid sm:grid-cols-5 gap-4 p-4 border-b last:border-0 items-center hover:bg-muted/30 transition-colors"
-            >
-              <div className="col-span-2 flex items-center gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                  {student.name.charAt(0)}
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading students...</div>
+          ) : (
+            filtered.map((student) => (
+              <div
+                key={student.id}
+                className="grid sm:grid-cols-5 gap-4 p-4 border-b last:border-0 items-center hover:bg-muted/30 transition-colors"
+              >
+                <div className="col-span-2 flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {(student.name || "U").charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{student.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{student.email}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{student.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{student.email}</p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5 shrink-0" />
+                  {new Date(student.enrolledAt).toLocaleDateString()}
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        student.progress >= 80
+                          ? "bg-emerald-500"
+                          : student.progress >= 40
+                            ? "bg-amber-500"
+                            : "bg-blue-500"
+                      )}
+                      style={{ width: `${student.progress}%` }}
+                    />
+                  </div>
+                  <span className={cn(
+                    "text-sm font-medium shrink-0 w-10 text-right",
+                    student.progress >= 80
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : student.progress >= 40
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-blue-600 dark:text-blue-400"
+                  )}>
+                    {student.progress}%
+                  </span>
+                </div>
+                <div className="text-sm text-muted-foreground hidden sm:block truncate">
+                  {student.courseName}
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-3.5 w-3.5 shrink-0" />
-                {student.enrolledAt}
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all",
-                      student.progress >= 80
-                        ? "bg-emerald-500"
-                        : student.progress >= 40
-                          ? "bg-amber-500"
-                          : "bg-blue-500"
-                    )}
-                    style={{ width: `${student.progress}%` }}
-                  />
-                </div>
-                <span className={cn(
-                  "text-sm font-medium shrink-0 w-10 text-right",
-                  student.progress >= 80
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : student.progress >= 40
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-blue-600 dark:text-blue-400"
-                )}>
-                  {student.progress}%
-                </span>
-              </div>
-              <div className="text-sm text-muted-foreground hidden sm:block">
-                {student.lastActive}
-              </div>
-            </div>
-          ))}
+            ))
+          )}
 
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <p className="text-muted-foreground">No students found</p>
+              <p className="text-muted-foreground">
+                {search ? "No students match your search" : "No students enrolled yet"}
+              </p>
             </div>
           )}
         </CardContent>

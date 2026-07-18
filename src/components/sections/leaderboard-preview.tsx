@@ -1,11 +1,47 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { leaderboard } from "@/lib/mock-data"
+import { prisma } from "@/lib/prisma"
 import { Trophy, Zap } from "lucide-react"
 
 const rankColors = ["text-yellow-500", "text-gray-400", "text-amber-600"]
 
-export function LeaderboardPreview() {
+export async function LeaderboardPreview() {
+  const entries = await prisma.leaderboard.findMany({
+    take: 5,
+    orderBy: { points: "desc" },
+  })
+
+  const userIds = entries.map((e) => e.userId)
+  const [users, xpRecords, userBadges] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, image: true },
+    }),
+    prisma.xP.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, level: true },
+    }),
+    prisma.userBadge.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, badge: { select: { name: true } } },
+    }),
+  ])
+
+  const userMap = new Map(users.map((u) => [u.id, u]))
+  const xpMap = new Map(xpRecords.map((x) => [x.userId, x.level]))
+  const badgeMap = new Map(userBadges.map((b) => [b.userId, b.badge.name]))
+
+  const leaderboard = entries.map((e, idx) => ({
+    rank: idx + 1,
+    name: userMap.get(e.userId)?.name || "Anonymous",
+    image: userMap.get(e.userId)?.image,
+    xp: e.points,
+    level: xpMap.get(e.userId) ?? 1,
+    badge: badgeMap.get(e.userId) || "Learner",
+  }))
+
+  if (leaderboard.length === 0) return null
+
   return (
     <section className="py-20">
       <div className="container mx-auto px-4">

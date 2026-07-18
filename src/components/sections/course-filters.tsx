@@ -1,10 +1,16 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Search, SlidersHorizontal } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { categories } from "@/lib/mock-data"
+
+interface Category {
+  id: string
+  name: string
+  slug: string
+}
 
 interface CourseFiltersProps {
   search: string
@@ -23,6 +29,17 @@ export function CourseFilters({
   onCategoryChange,
   onDifficultyChange,
 }: CourseFiltersProps) {
+  const [categories, setCategories] = useState<Category[]>([])
+
+  useEffect(() => {
+    fetch("/api/public/categories")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setCategories(d.data)
+      })
+      .catch(() => {})
+  }, [])
+
   return (
     <div className="space-y-6">
       <div className="relative">
@@ -35,14 +52,21 @@ export function CourseFilters({
         />
       </div>
       <div className="flex flex-wrap gap-2">
+        <Badge
+          variant={category === "All" ? "default" : "outline"}
+          className="cursor-pointer transition-all hover:opacity-80"
+          onClick={() => onCategoryChange("All")}
+        >
+          All
+        </Badge>
         {categories.map((cat) => (
           <Badge
-            key={cat}
-            variant={category === cat ? "default" : "outline"}
+            key={cat.id}
+            variant={category === cat.slug ? "default" : "outline"}
             className="cursor-pointer transition-all hover:opacity-80"
-            onClick={() => onCategoryChange(cat)}
+            onClick={() => onCategoryChange(cat.slug)}
           >
-            {cat}
+            {cat.name}
           </Badge>
         ))}
       </div>

@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Save, User, Bell, Lock, Globe } from "lucide-react"
-import Link from "next/link"
 
 export default function TeacherSettingsPage() {
   const [saved, setSaved] = useState(false)
@@ -45,7 +44,7 @@ export default function TeacherSettingsPage() {
                   <input
                     id="name"
                     type="text"
-                    defaultValue="John Teacher"
+                    placeholder="Your full name"
                     className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
@@ -54,7 +53,7 @@ export default function TeacherSettingsPage() {
                   <input
                     id="email"
                     type="email"
-                    defaultValue="teacher@learnzfy.com"
+                    placeholder="your@email.com"
                     className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
@@ -64,7 +63,7 @@ export default function TeacherSettingsPage() {
                 <textarea
                   id="bio"
                   rows={3}
-                  defaultValue="Passionate educator with 8+ years of teaching experience. Specializing in web development and data science."
+                  placeholder="Tell students about yourself..."
                   className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-y"
                 />
               </div>
@@ -72,13 +71,10 @@ export default function TeacherSettingsPage() {
                 <Label>Profile Picture</Label>
                 <div className="mt-2 flex items-center gap-4">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-2xl font-bold text-primary">
-                    JT
+                    ?
                   </div>
                   <Button type="button" variant="outline" size="sm">
                     Change Photo
-                  </Button>
-                  <Button type="button" variant="ghost" size="sm">
-                    Remove
                   </Button>
                 </div>
               </div>

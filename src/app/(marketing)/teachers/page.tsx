@@ -1,37 +1,36 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { TeacherCard } from "@/components/shared/teacher-card"
+import { useState, useEffect } from "react"
+import { TeacherCard, type TeacherData } from "@/components/shared/teacher-card"
 import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
-import { teachers, categories } from "@/lib/mock-data"
 import { Badge } from "@/components/ui/badge"
 
 export default function TeachersPage() {
   const [search, setSearch] = useState("")
   const [specialty, setSpecialty] = useState("All")
+  const [teachers, setTeachers] = useState<TeacherData[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (search) params.set("search", search)
+    if (specialty !== "All") params.set("specialty", specialty)
+
+    setLoading(true)
+    fetch(`/api/public/teachers?${params}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setTeachers(d.data)
+      })
+      .catch(() => setTeachers([]))
+      .finally(() => setLoading(false))
+  }, [search, specialty])
 
   const allSpecialties = [
     "All",
     ...Array.from(new Set(teachers.flatMap((t) => t.specialties))),
   ]
-
-  const filtered = useMemo(() => {
-    let result = teachers
-    if (search) {
-      const q = search.toLowerCase()
-      result = result.filter(
-        (t) =>
-          t.name.toLowerCase().includes(q) ||
-          t.bio.toLowerCase().includes(q) ||
-          t.specialties.some((s) => s.toLowerCase().includes(q))
-      )
-    }
-    if (specialty !== "All") {
-      result = result.filter((t) => t.specialties.includes(specialty))
-    }
-    return result
-  }, [search, specialty])
 
   return (
     <div className="min-h-screen">
@@ -73,11 +72,25 @@ export default function TeachersPage() {
 
       <section className="py-12">
         <div className="container mx-auto px-4">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {filtered.map((teacher) => (
-              <TeacherCard key={teacher.id} teacher={teacher} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="text-center py-20">
+              <div className="animate-pulse text-muted-foreground">Loading teachers...</div>
+            </div>
+          ) : teachers.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground">
+                {search || specialty !== "All"
+                  ? "No teachers match your search"
+                  : "Teachers will appear here once they are approved"}
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {teachers.map((teacher) => (
+                <TeacherCard key={teacher.id} teacher={teacher} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>
