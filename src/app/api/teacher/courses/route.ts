@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { title, description, shortDescription, category, difficulty, duration } = body
+  const { title, description, shortDescription, category, difficulty, duration, thumbnailUrl } = body
 
   if (!title || !description) {
     return err("Title and description are required")
@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
       slug,
       description,
       shortDescription: shortDescription || null,
+      thumbnailUrl: thumbnailUrl || null,
       categoryId,
       teacherId: userId,
       difficulty: difficulty || "beginner",

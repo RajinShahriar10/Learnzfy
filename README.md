@@ -27,7 +27,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind
 
 ### 👨‍🏫 Teacher Experience
 - Teacher application & approval workflow (admin-reviewed)
-- Course authoring — create and manage courses, modules, and lessons
+- Course authoring — create and manage courses, modules, and lessons, with Cloudinary-powered thumbnail uploads
 - Manage enrolled students
 - Performance analytics and content insights
 - Teacher profile with public-facing page and teacher reviews
@@ -70,6 +70,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind
 | **Forms & Validation** | [React Hook Form](https://react-hook-form.com) · [Zod](https://zod.dev) · `@hookform/resolvers` |
 | **Data Fetching** | [TanStack Query](https://tanstack.com/query) v5 |
 | **Charts** | [Recharts](https://recharts.org) |
+| **Image Storage** | [Cloudinary](https://cloudinary.com) — course thumbnails & image uploads |
 | **QR Codes** | `qrcode` · `qrcode.react` |
 | **Misc** | `date-fns` · `bcryptjs` |
 
@@ -142,6 +143,13 @@ AUTH_URL="http://localhost:3000"
 # Google OAuth (optional but recommended)
 AUTH_GOOGLE_ID="your-google-client-id"
 AUTH_GOOGLE_SECRET="your-google-client-secret"
+
+# Cloudinary (required for image/thumbnail uploads)
+# Create a free account at https://cloudinary.com and grab your credentials
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="your-api-key"
+CLOUDINARY_API_SECRET="your-api-secret"
+CLOUDINARY_UPLOAD_FOLDER="Learnzfy"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"

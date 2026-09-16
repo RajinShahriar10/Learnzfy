@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save, Upload } from "lucide-react"
+import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
+import { ThumbnailUploader } from "@/components/shared/thumbnail-uploader"
 
 const categories = [
   "SSC",
@@ -26,6 +27,7 @@ export default function CreateCoursePage() {
   const [category, setCategory] = useState(categories[0])
   const [difficulty, setDifficulty] = useState<(typeof difficulties)[number]>("beginner")
   const [duration, setDuration] = useState("")
+  const [thumbnail, setThumbnail] = useState<string | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
 
@@ -45,6 +47,7 @@ export default function CreateCoursePage() {
           category,
           difficulty,
           duration,
+          thumbnailUrl: thumbnail,
         }),
       })
 
@@ -176,18 +179,9 @@ export default function CreateCoursePage() {
           <div className="space-y-6">
             <Card>
               <CardContent className="p-6">
-                <Label>Course Thumbnail</Label>
-                <div className="mt-2 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center">
-                  <Upload className="h-8 w-8 text-muted-foreground/50" />
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Drag & drop or click to upload
-                  </p>
-                  <p className="text-xs text-muted-foreground/60 mt-1">
-                    PNG, JPG, or WebP (max 5MB)
-                  </p>
-                  <Button type="button" variant="outline" size="sm" className="mt-4">
-                    Choose File
-                  </Button>
+                <Label>{ "Course Thumbnail" }</Label>
+                <div className="mt-2">
+                  <ThumbnailUploader value={thumbnail} onChange={setThumbnail} />
                 </div>
               </CardContent>
             </Card>

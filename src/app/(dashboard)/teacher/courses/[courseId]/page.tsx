@@ -24,7 +24,9 @@ import {
   Play,
   FileCheck,
   Layers,
+  Loader2,
 } from "lucide-react"
+import { ThumbnailUploader } from "@/components/shared/thumbnail-uploader"
 
 type QuestionType = "mcq" | "true-false" | "multiple-select"
 
@@ -123,6 +125,15 @@ interface CourseData {
   exams: (TeacherExam & { questionPools: QuestionPool[] })[]
 }
 
+interface CourseForm {
+  title: string
+  shortDescription: string
+  description: string
+  category: string
+  difficulty: "beginner" | "intermediate" | "advanced"
+  duration: string
+}
+
 const difficultyColors: Record<string, string> = {
   beginner: "bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-400",
   intermediate: "bg-yellow-100 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400",
@@ -154,6 +165,16 @@ export default function EditCoursePage() {
   const [showNewQuiz, setShowNewQuiz] = useState(false)
   const [editingExam, setEditingExam] = useState<TeacherExam | null>(null)
   const [showNewExam, setShowNewExam] = useState(false)
+  const [form, setForm] = useState<CourseForm>({
+    title: "",
+    shortDescription: "",
+    description: "",
+    category: "SSC",
+    difficulty: "beginner",
+    duration: "",
+  })
+  const [thumbnail, setThumbnail] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     fetch(`/api/teacher/courses/${courseId}`)
@@ -170,11 +191,42 @@ export default function EditCoursePage() {
           randomizeQuestions: e.randomizeQuestions ?? true,
         }))
         setCourse(data)
+        setForm({
+          title: data.title,
+          shortDescription: data.shortDescription,
+          description: data.description,
+          category: data.category || "SSC",
+          difficulty: data.difficulty,
+          duration: data.duration,
+        })
+        setThumbnail(data.thumbnail || null)
         setExpandedModules(new Set(data.modules.map((m) => m.id)))
       })
       .catch(() => setCourse(null))
       .finally(() => setLoading(false))
   }, [courseId])
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/teacher/courses/${courseId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, thumbnailUrl: thumbnail }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Failed to save course")
+      }
+      setCourse((c) =>
+        c ? { ...c, ...form, thumbnail: thumbnail || "" } : c
+      )
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to save course")
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const courseQuizzes = course?.quizzes || []
   const courseExams = course?.exams || []
@@ -246,9 +298,13 @@ export default function EditCoursePage() {
             <Eye className="mr-1.5 h-4 w-4" />
             Preview
           </Button>
-          <Button size="sm">
-            <Save className="mr-1.5 h-4 w-4" />
-            Save
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="mr-1.5 h-4 w-4" />
+            )}
+            {saving ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
@@ -424,13 +480,21 @@ export default function EditCoursePage() {
         <div className="space-y-6">
           <Card>
             <CardContent className="p-6">
+              <h2 className="text-lg font-semibold mb-4">Course Thumbnail</h2>
+              <ThumbnailUploader value={thumbnail} onChange={setThumbnail} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
               <h2 className="text-lg font-semibold mb-4">Course Info</h2>
               <div className="space-y-4">
                 <div>
                   <Label>Title</Label>
                   <input
                     type="text"
-                    defaultValue={course.title}
+                    value={form.title}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                     className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
@@ -438,14 +502,16 @@ export default function EditCoursePage() {
                   <Label>Short Description</Label>
                   <input
                     type="text"
-                    defaultValue={course.shortDescription}
+                    value={form.shortDescription}
+                    onChange={(e) => setForm((f) => ({ ...f, shortDescription: e.target.value }))}
                     className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
                 <div>
                   <Label>Description</Label>
                   <textarea
-                    defaultValue={course.description}
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                     rows={4}
                     className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20 resize-y"
                   />
@@ -454,7 +520,8 @@ export default function EditCoursePage() {
                   <div>
                     <Label>Category</Label>
                     <select
-                      defaultValue={course.category}
+                      value={form.category}
+                      onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
                       className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       {["SSC", "HSC", "BUET Admission", "CKRUET Admission", "Versity Admission"].map((c) => (
@@ -465,11 +532,12 @@ export default function EditCoursePage() {
                   <div>
                     <Label>Difficulty</Label>
                     <select
-                      defaultValue={course.difficulty}
+                      value={form.difficulty}
+                      onChange={(e) => setForm((f) => ({ ...f, difficulty: e.target.value as CourseForm["difficulty"] }))}
                       className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     >
                       {["beginner", "intermediate", "advanced"].map((d) => (
-                        <option key={d} className="capitalize">
+                        <option key={d} value={d} className="capitalize">
                           {d.charAt(0).toUpperCase() + d.slice(1)}
                         </option>
                       ))}
@@ -480,7 +548,8 @@ export default function EditCoursePage() {
                   <Label>Duration</Label>
                   <input
                     type="text"
-                    defaultValue={course.duration}
+                    value={form.duration}
+                    onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
                     className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
