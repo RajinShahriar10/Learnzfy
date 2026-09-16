@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, CheckCircle2, GraduationCap } from "lucide-react"
 import Link from "next/link"
 import { ThumbnailUploader } from "@/components/shared/thumbnail-uploader"
+import { CourseContentBuilder } from "@/components/teacher/course-content-builder"
 
 const categories = [
   "SSC",
@@ -28,6 +29,7 @@ export default function CreateCoursePage() {
   const [difficulty, setDifficulty] = useState<(typeof difficulties)[number]>("beginner")
   const [duration, setDuration] = useState("")
   const [thumbnail, setThumbnail] = useState<string | null>(null)
+  const [createdCourseId, setCreatedCourseId] = useState<string | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
 
@@ -53,7 +55,7 @@ export default function CreateCoursePage() {
 
       const data = await res.json()
       if (data.success && data.data?.id) {
-        router.push(`/teacher/courses/${data.data.id}`)
+        setCreatedCourseId(data.data.id)
       } else {
         alert(data.error || "Failed to create course")
       }
@@ -62,6 +64,40 @@ export default function CreateCoursePage() {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (createdCourseId) {
+    return (
+      <div>
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" asChild className="mb-2">
+            <Link href="/teacher/courses">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Courses
+            </Link>
+          </Button>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold">Add Lectures</h1>
+              <p className="mt-1 text-muted-foreground">
+                Paste your YouTube video links and organize them into modules
+              </p>
+            </div>
+            <Button onClick={() => router.push(`/teacher/courses/${createdCourseId}`)}>
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Finish — Go to Course
+            </Button>
+          </div>
+        </div>
+
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+          <CheckCircle2 className="h-4 w-4" />
+          Course created! Add your lectures below — students can watch them lecture-wise.
+        </div>
+
+        <CourseContentBuilder courseId={createdCourseId} />
+      </div>
+    )
   }
 
   return (

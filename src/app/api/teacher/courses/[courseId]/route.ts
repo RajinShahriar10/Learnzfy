@@ -63,6 +63,7 @@ export async function GET(
         title: l.title,
         description: l.description || l.content || "",
         contentType: l.videoUrl ? "video" : "article",
+        youtubeUrl: l.videoUrl || "",
         duration: l.duration ? `${l.duration} min` : "",
         isFree: l.isFree,
         order: l.order,
