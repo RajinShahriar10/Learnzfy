@@ -35,7 +35,7 @@ async function main() {
     console.log(`Created user: ${user.email} (${user.role})`)
   }
 
-  const categories = ["Web Development", "Data Science", "Mobile Development", "Design", "Business"]
+  const categories = ["SSC", "HSC", "BUET Admission", "CKRUET Admission", "Versity Admission"]
   for (const name of categories) {
     await prisma.category.upsert({
       where: { name },
@@ -47,6 +47,14 @@ async function main() {
       },
     })
     console.log(`Created category: ${name}`)
+  }
+
+  const staleCategories = await prisma.category.findMany({
+    where: { name: { notIn: categories } },
+  })
+  for (const stale of staleCategories) {
+    await prisma.category.delete({ where: { id: stale.id } })
+    console.log(`Removed stale category: ${stale.name}`)
   }
 
   const badges = [
@@ -65,12 +73,13 @@ async function main() {
 
   const teacher = await prisma.user.findUnique({ where: { email: "teacher@learnzfy.com" } })
   const student = await prisma.user.findUnique({ where: { email: "student@learnzfy.com" } })
-  const webDev = await prisma.category.findUnique({ where: { name: "Web Development" } })
+  const ssc = await prisma.category.findUnique({ where: { name: "SSC" } })
+  const hsc = await prisma.category.findUnique({ where: { name: "HSC" } })
 
   if (teacher && student) {
     const sampleCourses = [
-      { title: "Introduction to Web Development", slug: "intro-web-dev", description: "Learn the fundamentals of web development including HTML, CSS, and JavaScript.", categoryId: webDev?.id, teacherId: teacher.id },
-      { title: "Python for Data Science", slug: "python-data-science", description: "Master Python programming for data analysis, visualization, and machine learning.", categoryId: webDev?.id, teacherId: teacher.id },
+      { title: "SSC Mathematics Complete Guide", slug: "ssc-mathematics-guide", description: "Master all SSC Math topics with step-by-step explanations, shortcuts, and past board questions.", categoryId: ssc?.id, teacherId: teacher.id },
+      { title: "HSC Physics First Paper Crash Course", slug: "hsc-physics-first-paper", description: "A complete crash course on HSC Physics 1st Paper with problem-solving practice for board exams.", categoryId: hsc?.id, teacherId: teacher.id },
     ]
     for (const courseData of sampleCourses) {
       const course = await prisma.course.upsert({
@@ -107,8 +116,8 @@ async function main() {
     if (courses.length >= 1) {
       const discussion = await prisma.discussion.create({
         data: {
-          title: "How do I get started with the first project?",
-          content: "I just finished the HTML section and I'm wondering what tools I should set up before starting the first project. Any recommendations for code editors or browsers?",
+          title: "Which chapters are most important for SSC Math boards?",
+          content: "I just started the SSC Mathematics guide and I'm wondering which chapters are most important for the board exam. Any advice on where I should focus first?",
           userId: student.id,
           courseId: courses[0].id,
           lessonId: null,
@@ -118,7 +127,7 @@ async function main() {
 
       await prisma.reply.create({
         data: {
-          content: "Great question! I recommend using VS Code with Live Server extension, and Chrome DevTools. That's the most common setup used in the industry.",
+          content: "Great question! Focus on Algebra and Geometry first since they carry the most marks. Also solve the past board questions chapter by chapter. Good luck!",
           userId: teacher.id,
           discussionId: discussion.id,
         },
@@ -126,7 +135,7 @@ async function main() {
 
       await prisma.reply.create({
         data: {
-          content: "Thanks John! I'll try that setup.",
+          content: "Thanks John! I'll focus on those chapters first.",
           userId: student.id,
           discussionId: discussion.id,
           parentId: (await prisma.reply.findFirst({ where: { discussionId: discussion.id }, orderBy: { createdAt: "asc" } }))?.id,

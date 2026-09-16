@@ -457,7 +457,7 @@ export default function EditCoursePage() {
                       defaultValue={course.category}
                       className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     >
-                      {["Web Development", "Mobile Development", "Data Science", "Design", "Business", "Marketing"].map((c) => (
+                      {["SSC", "HSC", "BUET Admission", "CKRUET Admission", "Versity Admission"].map((c) => (
                         <option key={c}>{c}</option>
                       ))}
                     </select>
@@ -1113,7 +1113,7 @@ function ExamEditorPanel({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Web Development Fundamentals Exam"
+                  placeholder="e.g., SSC Math Board Exam"
                   className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>

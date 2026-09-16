@@ -9,12 +9,11 @@ import { ArrowLeft, Save, Upload } from "lucide-react"
 import Link from "next/link"
 
 const categories = [
-  "Web Development",
-  "Mobile Development",
-  "Data Science",
-  "Design",
-  "Business",
-  "Marketing",
+  "SSC",
+  "HSC",
+  "BUET Admission",
+  "CKRUET Admission",
+  "Versity Admission",
 ]
 
 const difficulties = ["beginner", "intermediate", "advanced"] as const
@@ -89,7 +88,7 @@ export default function CreateCoursePage() {
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Complete Web Development Bootcamp"
+                    placeholder="e.g., HSC Physics First Paper Crash Course"
                     className="mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
                     required
                   />

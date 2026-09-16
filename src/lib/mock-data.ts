@@ -289,11 +289,11 @@ export const leaderboard: MockLeaderboardEntry[] = [
 
 export const categories = [
   "All",
-  "Web Development",
-  "Data Science",
-  "Mobile Development",
-  "Design",
-  "Business",
+  "SSC",
+  "HSC",
+  "BUET Admission",
+  "CKRUET Admission",
+  "Versity Admission",
 ]
 
 export const sponsorNames = [

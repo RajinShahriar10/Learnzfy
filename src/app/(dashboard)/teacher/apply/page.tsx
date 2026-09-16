@@ -297,7 +297,7 @@ export default function TeacherApplyPage() {
                 <Input
                   value={form.expertiseArea}
                   onChange={(e) => updateField("expertiseArea", e.target.value)}
-                  placeholder="e.g., Web Development, Data Science, Mobile Apps"
+                  placeholder="e.g., SSC Math, HSC Physics, BUET Admission Math"
                   className="mt-1"
                 />
               </div>
