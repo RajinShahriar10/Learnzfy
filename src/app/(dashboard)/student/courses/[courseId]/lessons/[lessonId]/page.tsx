@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useMemo, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import type { LessonNote } from "@/lib/lesson-data"
 import { QuizTaking } from "@/components/quiz/quiz-taking"
@@ -80,7 +80,6 @@ interface ApiData {
 
 export default function LessonViewerPage() {
   const params = useParams()
-  const router = useRouter()
   const courseId = params.courseId as string
   const lessonId = params.lessonId as string
 
@@ -88,7 +87,6 @@ export default function LessonViewerPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setLoading(true)
     fetch(`/api/public/lessons/${lessonId}`)
       .then((r) => {
         if (!r.ok) throw new Error("not found")
@@ -451,7 +449,6 @@ function CardMarkdown({ content }: { content: string }) {
   const elements: React.ReactNode[] = []
   let inCodeBlock = false
   let codeContent = ""
-  let codeLanguage = ""
 
   lines.forEach((line, i) => {
     if (line.startsWith("```")) {
@@ -462,11 +459,9 @@ function CardMarkdown({ content }: { content: string }) {
           </pre>
         )
         codeContent = ""
-        codeLanguage = ""
         inCodeBlock = false
       } else {
         inCodeBlock = true
-        codeLanguage = line.slice(3).trim()
       }
       return
     }

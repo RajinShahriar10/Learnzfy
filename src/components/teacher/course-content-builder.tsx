@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -135,8 +134,8 @@ const [lessonForm, setLessonForm] = useState<LessonFormState>({
     }
   }, [courseId])
 
-  useEffect(() => {
-    loadCourse()
+useEffect(() => {
+    Promise.resolve().then(loadCourse)
   }, [loadCourse])
 
   const refresh = async () => {
@@ -294,13 +293,9 @@ const deleteLesson = async (lesson: BuilderLesson) => {
   }
 
   const onQuizDeleted = async () => {
-    closeQuizPanel()
+closeQuizPanel()
     await refresh()
   }
-
-  const embedPreview = lessonForm.youtubeUrl && isValidYouTubeUrl(lessonForm.youtubeUrl)
-    ? toYouTubeEmbedUrl(lessonForm.youtubeUrl)
-    : null
 
   const inputClass =
     "mt-1.5 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/20"
