@@ -15,10 +15,10 @@ export function HeroSection() {
             Free education for everyone. No paywalls. No limits.
           </div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl leading-tight">
-            Learn the skills
+            Education is your right,
             <br />
             <span className="bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-              you need to succeed
+              not a product for sale
             </span>
           </h1>
           <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
