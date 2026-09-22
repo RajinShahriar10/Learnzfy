@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
+import { enrichRecommendationReasons } from "@/lib/ai/recommend"
 
 export interface RecommendedCourse {
   id: string
@@ -188,6 +189,16 @@ export async function getRecommendations(userId: string): Promise<Recommendation
         ? `Matches your interest in ${c.category?.name}`
         : "Popular course",
     }))
+
+  const reasonDefaults = new Map(recommendedCourses.map((c) => [c.id, c.matchReason]))
+  const aiReasons = await enrichRecommendationReasons(
+    recommendedCourses.map((c) => ({ id: c.id, title: c.title, category: c.category?.name ?? null })),
+    { category: topCategoryNames[0], courseTitles: enrolledIds.size > 0 ? topCategoryNames : undefined },
+    (c) => reasonDefaults.get(c.id) || "Recommended for you"
+  )
+  recommendedCourses.forEach((c) => {
+    if (aiReasons[c.id]) c.matchReason = aiReasons[c.id]
+  })
 
   // Trending Courses (most enrolled)
   const trendingRaw = await prisma.course.findMany({

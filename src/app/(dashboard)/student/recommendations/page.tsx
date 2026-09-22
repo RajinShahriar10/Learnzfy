@@ -4,14 +4,15 @@ import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { redirect } from "next/navigation"
 import { Loader2, Compass } from "lucide-react"
+import { RecommendationData } from "@/lib/recommendations"
 import { ContinueLearning } from "@/components/recommendations/continue-learning"
 import { RecommendedCourses } from "@/components/recommendations/recommended-courses"
 import { TrendingCourses } from "@/components/recommendations/trending-courses"
 import { RecommendedTeachers } from "@/components/recommendations/recommended-teachers"
 
 export default function RecommendationsPage() {
-  const { data: session, status: authStatus } = useSession()
-  const [data, setData] = useState<any>(null)
+  const { status: authStatus } = useSession()
+  const [data, setData] = useState<RecommendationData | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function RecommendationsPage() {
         <div>
           <h1 className="text-2xl font-bold">Recommended for You</h1>
           <p className="text-sm text-muted-foreground">
-            Personalized recommendations based on your learning activity
+            AI-personalized recommendations based on your learning activity
           </p>
         </div>
       </div>

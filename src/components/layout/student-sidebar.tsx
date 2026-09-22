@@ -18,6 +18,8 @@ import {
   Compass,
   User,
   ExternalLink,
+  Bot,
+  CalendarRange,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle, ThemeToggleIcon } from "@/components/theme/theme-toggle"
@@ -28,6 +30,8 @@ import { UnreadBadge } from "@/components/notifications/unread-badge"
 const sidebarItems = [
   { href: "/student", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/student/recommendations", icon: Compass, label: "Recommendations" },
+  { href: "/student/ai-tutor", icon: Bot, label: "AI Tutor" },
+  { href: "/student/study-planner", icon: CalendarRange, label: "Study Planner" },
   { href: "/student/analytics", icon: BarChart3, label: "Analytics" },
   { href: "/student/courses", icon: BookOpen, label: "My Courses" },
   { href: "/student/leaderboard", icon: Medal, label: "Leaderboard" },

@@ -12,6 +12,7 @@ import { DiscussionList } from "@/components/discussions/discussion-list"
 import { AskQuestionForm } from "@/components/discussions/ask-question-form"
 import { CourseContentSidebar } from "@/components/lesson/course-content-sidebar"
 import { BookmarkButton } from "@/components/bookmarks/bookmark-button"
+import { AiTutorChat } from "@/components/ai/tutor-chat"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -402,6 +403,9 @@ export default function LessonViewerPage() {
                     <TabsTrigger value="discussions" className="flex-1">
                       Discuss
                     </TabsTrigger>
+                    <TabsTrigger value="tutor" className="flex-1">
+                      Tutor
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="resources" className="mt-4">
                     <ResourcesPanel
@@ -423,6 +427,11 @@ export default function LessonViewerPage() {
                         lessonId={lessonId}
                         basePath={`/student/courses/${courseId}/discussions`}
                       />
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="tutor" className="mt-4">
+                    <div className="h-[62vh]">
+                      <AiTutorChat courseId={courseId} lessonId={lessonId} />
                     </div>
                   </TabsContent>
                 </Tabs>

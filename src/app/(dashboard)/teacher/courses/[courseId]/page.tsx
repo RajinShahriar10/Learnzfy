@@ -25,6 +25,7 @@ import {
   FileCheck,
   Layers,
   Loader2,
+  Sparkles,
 } from "lucide-react"
 import { ThumbnailUploader } from "@/components/shared/thumbnail-uploader"
 
@@ -708,6 +709,8 @@ function QuizEditorPanel({
   const [randomQuestions, setRandomQuestions] = useState(quiz?.randomQuestions || false)
   const [questions, setQuestions] = useState<QuizQuestion[]>(quiz?.questions || [])
   const [editingQuestion, setEditingQuestion] = useState<number | null>(null)
+  const [generating, setGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
 
   const addQuestion = (type: QuestionType) => {
     const newQ: QuizQuestion = {
@@ -731,6 +734,39 @@ function QuizEditorPanel({
   const removeQuestion = (index: number) => {
     setQuestions((prev) => prev.filter((_, i) => i !== index))
     setEditingQuestion(null)
+  }
+
+  const generateWithAi = async () => {
+    if (generating) return
+    setGenerating(true)
+    setGenerateError(null)
+    try {
+      const res = await fetch("/api/ai/quiz-generator", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          lessonId: quiz?.lessonId,
+          courseId,
+          title: title || undefined,
+          description: description || undefined,
+          count: 5,
+        }),
+      })
+      const json = await res.json()
+      if (!json.success) {
+        setGenerateError(json.error || "Could not generate questions")
+        return
+      }
+      const generated: QuizQuestion[] = json.data.questions.map((q: QuizQuestion, i: number) => ({
+        ...q,
+        id: `aiq-${Date.now()}-${i}`,
+      }))
+      setQuestions((prev) => [...prev, ...generated])
+    } catch {
+      setGenerateError("Network error. Please try again.")
+    } finally {
+      setGenerating(false)
+    }
   }
 
   return (
@@ -842,6 +878,20 @@ function QuizEditorPanel({
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                onClick={generateWithAi}
+                disabled={generating}
+                className="bg-primary"
+              >
+                {generating ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                {generating ? "Generating..." : "AI Generate"}
+              </Button>
               <Button variant="outline" size="sm" onClick={() => addQuestion("mcq")}>
                 <Plus className="mr-1.5 h-3.5 w-3.5" />
                 MCQ
@@ -856,6 +906,12 @@ function QuizEditorPanel({
               </Button>
             </div>
           </div>
+
+          {generateError && (
+            <p className="mb-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {generateError}
+            </p>
+          )}
 
           {questions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed">

@@ -1,0 +1,6 @@
+export { isAiConfigured, aiModeLabel, getAiConfig } from "./providers"
+export { aiComplete, aiCompleteJson, safeAiCall, AiNotConfiguredError, type AiMessage } from "./client"
+export { chatWithTutor, listTutorConversations, getTutorConversation } from "./tutor"
+export { generateQuizQuestions } from "./quizgen"
+export { generateStudyPlan, listStudyPlans } from "./planner"
+export { enrichRecommendationReasons } from "./recommend"

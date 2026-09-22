@@ -19,6 +19,10 @@ Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind
 - **Rewards store** — redeem points for coupons, discounts, and promo codes backed by sponsors
 - **Community** — per-course and per-lesson discussions with nested replies, voting, and pinning
 - **Recommendations** — continue-learning prompts, trending courses, and recommended courses/teachers
+- **AI Tutor** — a 24/7 chatbot that explains any lesson, answers doubts in English or Bangla, and keeps per-course conversation history
+- **AI Study Planner** — generates a personalized week-by-week study roadmap (learn/practice/revise phases) for any goal, with tips and saved plans
+- **AI Quiz Generator** — teachers generate MCQ / True-False / Multi-Select questions directly from lesson content with one click
+- **AI-Powered Recommendations** — personalized match reasons ("Why this course?") for every recommended course
 - **Search** — full-text search with live suggestions, recent & popular queries
 - **Bookmarks & saved content** — save courses and lessons for later
 - **Notifications** — in-app notification center with unread badges
@@ -72,6 +76,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind
 | **Charts** | [Recharts](https://recharts.org) |
 | **Image Storage** | [Cloudinary](https://cloudinary.com) — course thumbnails & image uploads |
 | **QR Codes** | `qrcode` · `qrcode.react` |
+| **AI** | [Google Gemini](https://ai.google.dev) (OpenAI-compatible) with provider-agnostic client · built-in offline engine |
 | **Misc** | `date-fns` · `bcryptjs` |
 
 ---
@@ -151,6 +156,13 @@ CLOUDINARY_API_KEY="your-api-key"
 CLOUDINARY_API_SECRET="your-api-secret"
 CLOUDINARY_UPLOAD_FOLDER="Learnzfy"
 
+# AI (optional — the smart offline engine works without a key.
+# For the live LLM: create a free Google AI Studio key at https://aistudio.google.com)
+AI_PROVIDER="gemini"          # gemini | groq | openrouter | cerebras
+AI_API_KEY=""                 # leave empty to run the built-in offline engine
+AI_BASE_URL=""                # optional override
+AI_MODEL=""                   # optional override (default: gemini-3.6-flash)
+
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NEXT_PUBLIC_APP_NAME="Learnzfy"
@@ -168,6 +180,11 @@ npm run db:seed
 
 > Prefer versioned migrations for production — replace `db:push` with:
 > `npm run db:migrate` (creates & applies a migration).
+
+> **AI features** (AI Tutor, AI Study Planner, saved chats & plans) add the `tutor_conversations`,
+> `tutor_messages`, and `study_plans` tables. Apply them with:
+> `npx prisma migrate deploy`
+> (or run `npm run db:push` on a fresh/development database).
 
 ### 4. Run the development server
 
