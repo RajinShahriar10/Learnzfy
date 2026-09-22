@@ -174,7 +174,7 @@ export default function TeacherCoursesPage() {
                       </span>
                       <span className="flex items-center gap-1">
                         <BookOpen className="h-3.5 w-3.5" />
-                        {course.moduleCount} modules
+                        {course.moduleCount} subject{course.moduleCount !== 1 ? "s" : ""}
                       </span>
                       <span className="flex items-center gap-1">
                         <Users className="h-3.5 w-3.5" />

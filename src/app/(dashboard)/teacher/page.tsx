@@ -112,7 +112,7 @@ export default async function TeacherDashboard() {
       color: "text-amber-600 bg-amber-100 dark:bg-amber-950 dark:text-amber-400",
     },
     {
-      label: "Modules Created",
+      label: "Subjects Created",
       value: moduleCount,
       icon: Layers,
       color: "text-rose-600 bg-rose-100 dark:bg-rose-950 dark:text-rose-400",
@@ -130,7 +130,7 @@ export default async function TeacherDashboard() {
       color: "text-yellow-600 bg-yellow-100 dark:bg-yellow-950 dark:text-yellow-400",
     },
     {
-      label: "Total Modules",
+      label: "Total Subjects",
       value: moduleCount,
       icon: BarChart3,
       color: "text-indigo-600 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-400",

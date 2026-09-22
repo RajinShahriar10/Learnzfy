@@ -12,22 +12,18 @@ import {
   Save,
   Eye,
   Plus,
-  GripVertical,
   Pencil,
   Trash2,
-  Video,
-  FileText,
   HelpCircle,
-  Code,
   ChevronDown,
   ChevronRight,
-  Play,
   FileCheck,
   Layers,
   Loader2,
   Sparkles,
 } from "lucide-react"
 import { ThumbnailUploader } from "@/components/shared/thumbnail-uploader"
+import { CourseContentBuilder } from "@/components/teacher/course-content-builder"
 
 type QuestionType = "mcq" | "true-false" | "multiple-select"
 
@@ -141,27 +137,12 @@ const difficultyColors: Record<string, string> = {
   advanced: "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400",
 }
 
-const contentTypeIcons: Record<string, typeof Video> = {
-  video: Video,
-  article: FileText,
-  quiz: HelpCircle,
-  code: Code,
-}
-
-const contentTypeLabels: Record<string, string> = {
-  video: "Video",
-  article: "Article",
-  quiz: "Quiz",
-  code: "Code Exercise",
-}
-
 export default function EditCoursePage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.courseId as string
   const [course, setCourse] = useState<CourseData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
   const [editingQuiz, setEditingQuiz] = useState<TeacherQuiz | null>(null)
   const [showNewQuiz, setShowNewQuiz] = useState(false)
   const [editingExam, setEditingExam] = useState<TeacherExam | null>(null)
@@ -201,7 +182,6 @@ export default function EditCoursePage() {
           duration: data.duration,
         })
         setThumbnail(data.thumbnail || null)
-        setExpandedModules(new Set(data.modules.map((m) => m.id)))
       })
       .catch(() => setCourse(null))
       .finally(() => setLoading(false))
@@ -257,15 +237,6 @@ export default function EditCoursePage() {
     )
   }
 
-  const toggleModule = (id: string) => {
-    setExpandedModules((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
   return (
     <div>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -312,43 +283,7 @@ export default function EditCoursePage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Course Content</h2>
-                <Button size="sm">
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Add Module
-                </Button>
-              </div>
-
-              {course.modules.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed">
-                  <Plus className="h-10 w-10 text-muted-foreground/50" />
-                  <h3 className="mt-4 font-semibold">No modules yet</h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Start building your course by adding modules and lessons
-                  </p>
-                  <Button size="sm" className="mt-4">
-                    <Plus className="mr-1.5 h-4 w-4" />
-                    Create First Module
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {course.modules.map((mod, idx) => (
-                    <ModuleCard
-                      key={mod.id}
-                      module={mod}
-                      index={idx}
-                      isExpanded={expandedModules.has(mod.id)}
-                      onToggle={() => toggleModule(mod.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <CourseContentBuilder courseId={course.id} />
         </div>
 
         {editingQuiz || showNewQuiz ? (
@@ -584,109 +519,6 @@ export default function EditCoursePage() {
         </div>
       </div>
     </div>
-  )
-}
-
-function ModuleCard({
-  module,
-  index,
-  isExpanded,
-  onToggle,
-}: {
-  module: TeacherModule
-  index: number
-  isExpanded: boolean
-  onToggle: () => void
-}) {
-  return (
-    <Card className="overflow-hidden">
-      <div
-        className="flex items-center gap-3 p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={onToggle}
-      >
-        <GripVertical className="h-4 w-4 shrink-0 text-muted-foreground/40" />
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-sm font-semibold text-primary">
-          {index + 1}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-medium">{module.title}</p>
-          <p className="text-xs text-muted-foreground">
-            {module.lessons.length} lesson{module.lessons.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0"
-            onClick={(e) => {
-              e.stopPropagation()
-            }}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 w-8 p-0 text-destructive"
-            onClick={(e) => {
-              e.stopPropagation()
-            }}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-          {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
-      </div>
-
-      {isExpanded && (
-        <div className="border-t px-4 py-3 space-y-2">
-          {module.lessons.map((lesson, idx) => {
-            const Icon = contentTypeIcons[lesson.contentType]
-            return (
-              <div
-                key={lesson.id}
-                className="flex items-center gap-3 rounded-lg border bg-background p-3 text-sm"
-              >
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted">
-                  <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{lesson.title}</span>
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5">
-                      {contentTypeLabels[lesson.contentType]}
-                    </Badge>
-                    {lesson.isFree && (
-                      <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">
-                        Free
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">{lesson.duration}</p>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                    <Pencil className="h-3 w-3" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive">
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
-          <Button variant="outline" size="sm" className="w-full mt-2">
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Add Lesson
-          </Button>
-        </div>
-      )}
-    </Card>
   )
 }
 
@@ -1081,7 +913,8 @@ function QuestionEditor({
           <div className="mt-1.5 space-y-1">
             {question.options.map((opt, idx) => {
               const isSelected = (question.correctAnswer as string[]).includes(opt)
-              return (
+
+  return (
                 <label key={idx} className="flex items-center gap-2 text-sm cursor-pointer p-2 rounded hover:bg-muted/50">
                   <input
                     type="checkbox"

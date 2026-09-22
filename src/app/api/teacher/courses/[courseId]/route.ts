@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { auth } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { ok, notFound, unauthorized, err } from "@/lib/api-helpers"
+import { deserializeCorrectAnswer } from "@/lib/quiz-serialization"
 
 export async function GET(
   _req: NextRequest,
@@ -85,7 +86,7 @@ export async function GET(
         type: question.type,
         question: question.text,
         options: (question.options as string[]) || [],
-        correctAnswer: question.correctAnswer,
+        correctAnswer: deserializeCorrectAnswer(question.type, String(question.correctAnswer ?? "")),
         explanation: "",
       })),
     })),

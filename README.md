@@ -12,8 +12,8 @@ Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind
 
 ### 👩‍🎓 Student Experience
 - **Dashboard** with personalized insights and quick access to enrolled courses
-- **Course player** — modules, video lessons, progress tracking, notes panel, and downloadable resources
-- **Assessments** — timed quizzes (MCQ, true/false, multi-select) and proctored-style exams with attempt limits and passing scores
+- **Course player** — subjects (e.g., Physics, Chemistry) organized as playlists of YouTube video lectures, with progress tracking, notes panel, and downloadable resources
+- **Assessments** — timed quizzes (MCQ, true/false, multi-select) attached to individual lectures — take a quiz right after finishing a lecture — and proctored-style exams with attempt limits and passing scores
 - **Certificates** — automatically issued on completion, with a unique QR-coded verification ID and a public verification page
 - **Gamification** — earn XP and level up, unlock badges and achievement tiers, maintain learning streaks, and climb the leaderboard
 - **Rewards store** — redeem points for coupons, discounts, and promo codes backed by sponsors
@@ -21,7 +21,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind
 - **Recommendations** — continue-learning prompts, trending courses, and recommended courses/teachers
 - **AI Tutor** — a 24/7 chatbot that explains any lesson, answers doubts in English or Bangla, and keeps per-course conversation history
 - **AI Study Planner** — generates a personalized week-by-week study roadmap (learn/practice/revise phases) for any goal, with tips and saved plans
-- **AI Quiz Generator** — teachers generate MCQ / True-False / Multi-Select questions directly from lesson content with one click
+- **AI Quiz Generator** — teachers generate MCQ / True-False / Multi-Select questions directly from a lecture's content with one click, and attach the quiz to that lecture
 - **AI-Powered Recommendations** — personalized match reasons ("Why this course?") for every recommended course
 - **Search** — full-text search with live suggestions, recent & popular queries
 - **Bookmarks & saved content** — save courses and lessons for later
@@ -31,7 +31,7 @@ Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Tailwind
 
 ### 👨‍🏫 Teacher Experience
 - Teacher application & approval workflow (admin-reviewed)
-- Course authoring — create and manage courses, modules, and lessons, with Cloudinary-powered thumbnail uploads
+- Course authoring — build courses as subjects (e.g., HSC → Physics, Chemistry) filled with YouTube lecture playlists and a quiz for each lecture, with Cloudinary-powered thumbnail uploads
 - Manage enrolled students
 - Performance analytics and content insights
 - Teacher profile with public-facing page and teacher reviews

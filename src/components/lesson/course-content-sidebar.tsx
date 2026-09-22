@@ -57,7 +57,7 @@ export function CourseContentSidebar({ courseId, modules, progress }: CourseCont
             <div key={mod.id}>
               <div className="px-4 py-3 bg-muted/30">
                 <p className="text-xs text-muted-foreground">
-                  Module {mod.order}
+                  Subject {mod.order}
                 </p>
                 <p className="text-sm font-medium">{mod.title}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">

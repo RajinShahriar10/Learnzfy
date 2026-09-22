@@ -80,7 +80,7 @@ export default function CreateCoursePage() {
             <div>
               <h1 className="text-3xl font-bold">Add Lectures</h1>
               <p className="mt-1 text-muted-foreground">
-                Paste your YouTube video links and organize them into modules
+                Paste your YouTube video links and organize them into subjects (e.g., Physics, Chemistry)
               </p>
             </div>
             <Button onClick={() => router.push(`/teacher/courses/${createdCourseId}`)}>

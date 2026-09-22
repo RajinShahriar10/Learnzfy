@@ -17,8 +17,11 @@ import {
   ChevronRight,
   Loader2,
   MonitorPlay,
+  HelpCircle,
 } from "lucide-react"
 import { toYouTubeEmbedUrl, isValidYouTubeUrl } from "@/lib/youtube"
+import { LectureQuizPanel, QuestionBadge } from "@/components/teacher/lecture-quiz-panel"
+import type { PresentedQuiz } from "@/components/teacher/lecture-quiz-panel"
 
 interface BuilderLesson {
   id: string
@@ -58,6 +61,14 @@ interface LessonFormState {
   isFree: boolean
 }
 
+interface QuizFormState {
+  open: boolean
+  lessonId: string
+  lessonTitle: string
+  lessonDescription: string
+  quiz: PresentedQuiz | null
+}
+
 interface CourseContentBuilderProps {
   courseId: string
   onChanged?: () => void
@@ -86,7 +97,7 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
     title: "",
     description: "",
   })
-  const [lessonForm, setLessonForm] = useState<LessonFormState>({
+const [lessonForm, setLessonForm] = useState<LessonFormState>({
     open: false,
     moduleId: "",
     editing: null,
@@ -97,6 +108,14 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
     duration: "",
     isFree: false,
   })
+  const [quizForm, setQuizForm] = useState<QuizFormState>({
+    open: false,
+    lessonId: "",
+    lessonTitle: "",
+    lessonDescription: "",
+    quiz: null,
+  })
+  const [quizzesByLesson, setQuizzesByLesson] = useState<Record<string, PresentedQuiz>>({})
   const [busy, setBusy] = useState(false)
 
   const loadCourse = useCallback(async () => {
@@ -104,6 +123,10 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
       const data = await api(`/api/teacher/courses/${courseId}`)
       setModules(data.modules as BuilderModule[])
       setExpanded(Object.fromEntries((data.modules as BuilderModule[]).map((m) => [m.id, true])))
+      const quizzes = (data.quizzes || []) as PresentedQuiz[]
+      setQuizzesByLesson(
+        Object.fromEntries(quizzes.filter((q) => q.lessonId).map((q) => [q.lessonId, q]))
+      )
       setError(null)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load course content")
@@ -143,7 +166,7 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
     })
   }
 
-  const openEditLesson = (lesson: BuilderLesson, moduleId: string) => {
+const openEditLesson = (lesson: BuilderLesson, moduleId: string) => {
     setLessonForm({
       open: true,
       moduleId,
@@ -156,6 +179,18 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
       isFree: lesson.isFree,
     })
   }
+
+  const openQuizPanel = (lesson: BuilderLesson) => {
+    setQuizForm({
+      open: true,
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+      lessonDescription: lesson.description,
+      quiz: quizzesByLesson[lesson.id] || null,
+    })
+  }
+
+  const closeQuizPanel = () => setQuizForm((f) => ({ ...f, open: false }))
 
   const saveModule = async () => {
     if (!moduleForm.title.trim()) return
@@ -189,7 +224,7 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
   }
 
   const deleteModule = async (mod: BuilderModule) => {
-    if (!confirm(`Delete module "${mod.title}" and all its lessons?`)) return
+    if (!confirm(`Delete subject "${mod.title}" and all its lectures?`)) return
     setBusy(true)
     try {
       await api(`/api/teacher/modules/${mod.id}`, { method: "DELETE" })
@@ -240,7 +275,7 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
     }
   }
 
-  const deleteLesson = async (lesson: BuilderLesson) => {
+const deleteLesson = async (lesson: BuilderLesson) => {
     if (!confirm(`Delete lesson "${lesson.title}"?`)) return
     setBusy(true)
     try {
@@ -253,6 +288,16 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
     }
   }
 
+  const onQuizSaved = async () => {
+    closeQuizPanel()
+    await refresh()
+  }
+
+  const onQuizDeleted = async () => {
+    closeQuizPanel()
+    await refresh()
+  }
+
   const embedPreview = lessonForm.youtubeUrl && isValidYouTubeUrl(lessonForm.youtubeUrl)
     ? toYouTubeEmbedUrl(lessonForm.youtubeUrl)
     : null
@@ -263,16 +308,16 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div>
+<div>
           <h2 className="text-lg font-semibold">Course Content</h2>
           <p className="text-sm text-muted-foreground">
-            Add modules and lectures with YouTube video links
+            Add subjects (e.g., Physics, Chemistry) and YouTube lecture playlists
           </p>
         </div>
         {!moduleForm.open && (
           <Button size="sm" onClick={openNewModule} disabled={busy}>
             <Plus className="mr-1.5 h-4 w-4" />
-            Add Module
+            Add Subject
           </Button>
         )}
       </div>
@@ -286,9 +331,9 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
       {moduleForm.open && (
         <Card>
           <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
+<div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">
-                {moduleForm.editing ? "Edit Module" : "New Module"}
+                {moduleForm.editing ? "Edit Subject" : "New Subject"}
               </h3>
               <Button
                 variant="ghost"
@@ -299,13 +344,13 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div>
-              <Label>Module Name</Label>
+<div>
+              <Label>Subject</Label>
               <input
                 className={inputClass}
                 value={moduleForm.title}
                 onChange={(e) => setModuleForm((f) => ({ ...f, title: e.target.value }))}
-                placeholder="e.g., Chapter 1: Algebra"
+                placeholder="e.g., Physics, Chemistry, Higher Mathematics"
               />
             </div>
             <div>
@@ -314,13 +359,13 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
                 className={inputClass}
                 value={moduleForm.description}
                 onChange={(e) => setModuleForm((f) => ({ ...f, description: e.target.value }))}
-                placeholder="Short summary of this module"
+                placeholder="Short summary of this subject"
               />
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={saveModule} disabled={busy || !moduleForm.title.trim()}>
                 {busy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                {moduleForm.editing ? "Save Module" : "Add Module"}
+                {moduleForm.editing ? "Save Subject" : "Add Subject"}
               </Button>
               <Button
                 size="sm"
@@ -339,15 +384,15 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : modules.length === 0 && !moduleForm.open ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed">
+<div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border-2 border-dashed">
           <MonitorPlay className="h-10 w-10 text-muted-foreground/50" />
-          <h3 className="mt-4 font-semibold">No modules yet</h3>
+          <h3 className="mt-4 font-semibold">No subjects yet</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create modules and add YouTube lectures to build your course
+            Create subjects (e.g., Physics, Chemistry) and add YouTube lectures to build your course
           </p>
           <Button size="sm" className="mt-4" onClick={openNewModule}>
             <Plus className="mr-1.5 h-4 w-4" />
-            Create First Module
+            Create First Subject
           </Button>
         </div>
       ) : (
@@ -397,11 +442,13 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
 
             {expanded[mod.id] && (
               <div className="border-t px-4 py-3 space-y-2">
-                {mod.lessons.map((lesson) => {
+{mod.lessons.map((lesson) => {
                   const Icon = lesson.contentType === "video" ? Video : FileText
+                  const lessonQuiz = quizzesByLesson[lesson.id]
+                  const quizOpen = quizForm.open && quizForm.lessonId === lesson.id
                   return (
+                    <div key={lesson.id} className="space-y-2">
                     <div
-                      key={lesson.id}
                       className="flex items-center gap-3 rounded-lg border bg-background p-3 text-sm"
                     >
                       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted">
@@ -425,12 +472,22 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
                               Free
                             </Badge>
                           )}
+                          <QuestionBadge count={lessonQuiz?.questions?.length ?? 0} />
                         </div>
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {lesson.duration || "—"}
                         </p>
                       </div>
                       <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          title={lessonQuiz ? "Edit lecture quiz" : "Add lecture quiz"}
+                          onClick={() => openQuizPanel(lesson)}
+                        >
+                          <HelpCircle className="h-3.5 w-3.5" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -448,6 +505,19 @@ export function CourseContentBuilder({ courseId, onChanged }: CourseContentBuild
                           <Trash2 className="h-3 w-3" />
                         </Button>
                       </div>
+                    </div>
+                    {quizOpen && (
+                      <LectureQuizPanel
+                        courseId={courseId}
+                        lessonId={lesson.id}
+                        lessonTitle={lesson.title}
+                        lessonDescription={lesson.description}
+                        initialQuiz={quizForm.quiz}
+                        onSaved={onQuizSaved}
+                        onDeleted={onQuizDeleted}
+                        onCancel={closeQuizPanel}
+                      />
+                    )}
                     </div>
                   )
                 })}

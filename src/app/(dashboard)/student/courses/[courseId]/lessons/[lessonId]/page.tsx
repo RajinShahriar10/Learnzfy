@@ -289,12 +289,14 @@ export default function LessonViewerPage() {
                 </div>
               )}
 
-              {lesson.contentType === "quiz" && quiz && (
+              {quiz && (
                 <div className="rounded-lg border bg-card p-6 text-center">
                   <HelpCircle className="mx-auto h-12 w-12 text-muted-foreground/40" />
                   <h2 className="mt-4 text-lg font-semibold">{quiz.title}</h2>
                   <p className="mt-1 text-sm text-muted-foreground max-w-lg mx-auto">
-                    {quiz.description || "Test your knowledge with this quiz."}
+                    {lesson.contentType === "video"
+                      ? "You finished the lecture. Test what you just learned!"
+                      : quiz.description || "Test your knowledge with this quiz."}
                   </p>
                   <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
                     <span>{quiz.questions.length} questions</span>
