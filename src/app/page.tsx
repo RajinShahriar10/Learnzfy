@@ -9,19 +9,22 @@ import { LeaderboardPreview } from "@/components/sections/leaderboard-preview"
 import { TestimonialsSection } from "@/components/sections/testimonials-section"
 import { SponsorsSection } from "@/components/sections/sponsors-section"
 import { CTASection } from "@/components/sections/cta-section"
+import { getSiteContent } from "@/lib/cms/content"
 
-export default function HomePage() {
+export default async function HomePage() {
+  const content = await getSiteContent()
+
   return (
     <>
-      <HeroSection />
-      <FeaturedCourses />
-      <StatisticsSection />
-      <TopTeachers />
-      <AchievementsSection />
-      <LeaderboardPreview />
-      <TestimonialsSection />
-      <SponsorsSection />
-      <CTASection />
+      <HeroSection content={content.hero} />
+      <FeaturedCourses content={content.featured} />
+      <StatisticsSection labels={content.statistics.labels} />
+      <TopTeachers content={content.topTeachers} />
+      <AchievementsSection content={content.achievements} />
+      <LeaderboardPreview content={content.leaderboard} />
+      <TestimonialsSection content={content.testimonials} />
+      <SponsorsSection subtext={content.sponsors.subtext} />
+      <CTASection content={content.cta} />
     </>
   )
 }

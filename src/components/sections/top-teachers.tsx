@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button"
 import { TeacherCard } from "@/components/shared/teacher-card"
 import { prisma } from "@/lib/prisma"
 import { ArrowRight } from "lucide-react"
+import type { CmsSectionHeading } from "@/lib/cms/types"
 
-export async function TopTeachers() {
+export async function TopTeachers({ content }: { content: CmsSectionHeading }) {
   const rawTeachers = await prisma.user.findMany({
     where: {
       role: "TEACHER",
@@ -62,10 +63,10 @@ export async function TopTeachers() {
       <div className="container mx-auto px-4">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Top Teachers</h2>
-            <p className="mt-2 text-muted-foreground">
-              Learn from industry experts
-            </p>
+            {content.heading && (
+              <h2 className="text-3xl font-bold tracking-tight">{content.heading}</h2>
+            )}
+            <p className="mt-2 text-muted-foreground">{content.subtext}</p>
           </div>
           <Link href="/teachers">
             <Button variant="ghost" className="gap-2 hidden sm:flex">

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"
+import type { CmsSectionHeading } from "@/lib/cms/types"
 
 interface Testimonial {
   id: string
@@ -13,7 +14,7 @@ interface Testimonial {
   rating: number
 }
 
-export function TestimonialsSection() {
+export function TestimonialsSection({ content }: { content: CmsSectionHeading }) {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [current, setCurrent] = useState(0)
 
@@ -43,12 +44,10 @@ export function TestimonialsSection() {
     <section className="py-20 bg-gradient-to-b from-background to-primary/5">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight">
-            What Our Students Say
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            Hear from the Learnzfy community
-          </p>
+          {content.heading && (
+            <h2 className="text-3xl font-bold tracking-tight">{content.heading}</h2>
+          )}
+          <p className="mt-2 text-muted-foreground">{content.subtext}</p>
         </div>
         <div className="mx-auto max-w-2xl">
           <Card className="relative p-8 md:p-12 text-center">

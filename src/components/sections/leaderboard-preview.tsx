@@ -2,10 +2,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { prisma } from "@/lib/prisma"
 import { Trophy, Zap } from "lucide-react"
+import type { CmsSectionHeading } from "@/lib/cms/types"
 
 const rankColors = ["text-yellow-500", "text-gray-400", "text-amber-600"]
 
-export async function LeaderboardPreview() {
+export async function LeaderboardPreview({
+  content,
+}: {
+  content: CmsSectionHeading
+}) {
   const entries = await prisma.leaderboard.findMany({
     take: 5,
     orderBy: { points: "desc" },
@@ -46,12 +51,10 @@ export async function LeaderboardPreview() {
     <section className="py-20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold tracking-tight">
-            Leaderboard
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            Top learners this month. Earn XP to climb the ranks.
-          </p>
+          {content.heading && (
+            <h2 className="text-3xl font-bold tracking-tight">{content.heading}</h2>
+          )}
+          <p className="mt-2 text-muted-foreground">{content.subtext}</p>
         </div>
         <div className="mx-auto max-w-2xl">
           <div className="rounded-xl border bg-card overflow-hidden">

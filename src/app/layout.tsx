@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import { Providers } from "@/providers"
@@ -6,6 +8,7 @@ import { Footer } from "@/components/layout/footer"
 import { SkipLink } from "@/components/layout/skip-link"
 import { WebVitals } from "@/components/layout/web-vitals"
 import { siteConfig } from "@/config"
+import { getSiteContent } from "@/lib/cms/content"
 import "./globals.css"
 
 const geistSans = Geist({
@@ -18,66 +21,63 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 })
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  keywords: [
-    "e-learning",
-    "online courses",
-    "education",
-    "programming",
-    "data science",
-    "web development",
-    "Learnzfy",
-  ],
-  authors: [{ name: "Learnzfy" }],
-  creator: "Learnzfy",
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: siteConfig.url,
-    siteName: siteConfig.name,
-    title: siteConfig.name,
-    description: siteConfig.description,
-    images: [
-      {
-        url: siteConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: siteConfig.name,
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description,
-    images: [siteConfig.ogImage],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent()
+  const { branding } = content
+
+  return {
+    metadataBase: new URL(siteConfig.url),
+    title: {
+      default: branding.metaTitle,
+      template: `%s | ${branding.siteName}`,
+    },
+    description: branding.metaDescription,
+    keywords: branding.metaKeywords,
+    authors: [{ name: branding.siteName }],
+    creator: branding.siteName,
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      url: siteConfig.url,
+      siteName: branding.siteName,
+      title: branding.metaTitle,
+      description: branding.metaDescription,
+      images: [
+        {
+          url: siteConfig.ogImage,
+          width: 1200,
+          height: 630,
+          alt: branding.siteName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: branding.metaTitle,
+      description: branding.metaDescription,
+      images: [siteConfig.ogImage],
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
-  },
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
-    apple: "/apple-touch-icon.png",
-  },
-  manifest: "/site.webmanifest",
-  verification: {
-    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
-  },
+    icons: {
+      icon: "/favicon.ico",
+      shortcut: "/favicon-16x16.png",
+      apple: "/apple-touch-icon.png",
+    },
+    manifest: "/site.webmanifest",
+    verification: {
+      google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+    },
+  }
 }
 
 const themeScript = `
@@ -95,27 +95,29 @@ const themeScript = `
   } catch (e) {}
 `
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: siteConfig.name,
-  url: siteConfig.url,
-  description: siteConfig.description,
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
-    },
-    "query-input": "required name=search_term_string",
-  },
-}
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const content = await getSiteContent()
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: content.branding.siteName,
+    url: siteConfig.url,
+    description: content.branding.metaDescription,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteConfig.url}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -131,11 +133,11 @@ export default function RootLayout({
         <SkipLink />
         <Providers>
           <div className="relative flex min-h-screen flex-col">
-            <Navbar />
+            <Navbar siteName={content.branding.siteName} links={content.nav.links} />
             <main id="main-content" className="flex-1 outline-none" tabIndex={-1}>
               {children}
             </main>
-            <Footer />
+            <Footer branding={content.branding} content={content.footer} />
           </div>
         </Providers>
         <WebVitals />

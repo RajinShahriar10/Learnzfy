@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/prisma"
 import { BookOpen, GraduationCap, Trophy, Users } from "lucide-react"
+import type { CmsStatLabels } from "@/lib/cms/types"
 
-export async function StatisticsSection() {
+export async function StatisticsSection({
+  labels,
+}: {
+  labels: CmsStatLabels
+}) {
   const [studentCount, courseCount, teacherCount, enrollmentCount, completedCount] =
     await Promise.all([
       prisma.user.count({ where: { role: "STUDENT", isActive: true } }),
@@ -17,10 +22,10 @@ export async function StatisticsSection() {
       : 0
 
   const stats = [
-    { icon: GraduationCap, value: studentCount.toLocaleString() + "+", label: "Active Students" },
-    { icon: BookOpen, value: courseCount.toLocaleString() + "+", label: "Free Courses" },
-    { icon: Users, value: teacherCount.toLocaleString() + "+", label: "Expert Teachers" },
-    { icon: Trophy, value: satisfactionRate + "%", label: "Satisfaction Rate" },
+    { icon: GraduationCap, value: studentCount.toLocaleString() + "+", label: labels.students },
+    { icon: BookOpen, value: courseCount.toLocaleString() + "+", label: labels.courses },
+    { icon: Users, value: teacherCount.toLocaleString() + "+", label: labels.teachers },
+    { icon: Trophy, value: satisfactionRate + "%", label: labels.satisfaction },
   ]
 
   return (

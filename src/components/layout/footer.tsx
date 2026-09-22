@@ -1,115 +1,56 @@
 import Link from "next/link"
+import type { CmsBranding, CmsFooter } from "@/lib/cms/types"
 
-export function Footer() {
+interface FooterProps {
+  branding: CmsBranding
+  content: CmsFooter
+}
+
+export function Footer({ branding, content }: FooterProps) {
   return (
     <footer className="border-t bg-muted/50">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <span className="text-lg font-bold text-primary">Learnzfy</span>
-            <p className="text-sm text-muted-foreground">
-              Education is your right, not a product for sale.
-            </p>
+            <span className="text-lg font-bold text-primary">{branding.siteName}</span>
+            <p className="text-sm text-muted-foreground">{content.tagline}</p>
           </div>
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold">Platform</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/courses"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Courses
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/teachers"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Teachers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/about"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/contact"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/api-docs"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  API Docs
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-4">
-            <h4 className="text-sm font-semibold">Support</h4>
-            <ul className="space-y-2">
-              <li>
-                <Link
-                  href="/help"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Help Center
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </div>
+          {content.columns.map((column) => (
+            <div key={column.heading} className="space-y-4">
+              <h4 className="text-sm font-semibold">{column.heading}</h4>
+              <ul className="space-y-2">
+                {column.links.map((link) => (
+                  <li key={`${column.heading}-${link.href}-${link.label}`}>
+                    <Link
+                      href={link.href}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
           <div className="space-y-4">
             <h4 className="text-sm font-semibold">Connect</h4>
             <ul className="space-y-2">
-              <li>
-                <Link
-                  href="https://github.com/anomalyco/learnzfy"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  GitHub
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="https://twitter.com/learnzfy"
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  Twitter
-                </Link>
-              </li>
+              {content.socials.map((social) => (
+                <li key={social.href}>
+                  <Link
+                    href={social.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {social.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
         <div className="mt-8 border-t pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Learnzfy. All rights reserved.
+            &copy; {new Date().getFullYear()} {content.copyright}
           </p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 
-export async function SponsorsSection() {
+export async function SponsorsSection({ subtext }: { subtext: string }) {
   const sponsors = await prisma.sponsor.findMany({
     where: { isActive: true },
     select: { id: true, name: true },
@@ -12,9 +12,7 @@ export async function SponsorsSection() {
   return (
     <section className="py-16 border-y bg-muted/30">
       <div className="container mx-auto px-4">
-        <p className="text-center text-sm text-muted-foreground mb-8">
-          Trusted by leading companies
-        </p>
+        <p className="text-center text-sm text-muted-foreground mb-8">{subtext}</p>
         <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
           {sponsors.map((sponsor) => (
             <div

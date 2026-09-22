@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button"
 import { CourseCard } from "@/components/shared/course-card"
 import { prisma } from "@/lib/prisma"
 import { ArrowRight } from "lucide-react"
+import type { CmsSectionHeading } from "@/lib/cms/types"
 
-export async function FeaturedCourses() {
+export async function FeaturedCourses({ content }: { content: CmsSectionHeading }) {
   const rawCourses = await prisma.course.findMany({
     where: { isPublished: true },
     take: 6,
@@ -34,10 +35,10 @@ export async function FeaturedCourses() {
       <div className="container mx-auto px-4">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">Featured Courses</h2>
-            <p className="mt-2 text-muted-foreground">
-              Start learning from our most popular courses
-            </p>
+            {content.heading && (
+              <h2 className="text-3xl font-bold tracking-tight">{content.heading}</h2>
+            )}
+            <p className="mt-2 text-muted-foreground">{content.subtext}</p>
           </div>
           <Link href="/courses">
             <Button variant="ghost" className="gap-2 hidden sm:flex">

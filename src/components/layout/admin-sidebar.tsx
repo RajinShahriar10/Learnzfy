@@ -27,6 +27,7 @@ import {
   Flame,
   FileText,
   ShieldCheck,
+  PenSquare,
 } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
@@ -78,6 +79,7 @@ const sidebarGroups: SidebarGroup[] = [
   {
     label: "Appearance",
     items: [
+      { href: "/admin/cms", icon: PenSquare, label: "Site Content" },
       { href: "/admin/website", icon: Globe, label: "Website" },
     ],
   },
